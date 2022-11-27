@@ -31,3 +31,14 @@ macro_rules! from_range {
     };
 }
 from_range!(i8, u8, i16, u16, i32, u32, i64, u64, isize);
+#[derive(Clone, Debug)]
+pub struct Spanned<T> {
+    pub inner: T,
+    pub span: Span,
+}
+
+impl<T> Spanned<T> {
+    pub fn new(inner: T, span: Span) -> Self {
+        Self { inner, span }
+    }
+}

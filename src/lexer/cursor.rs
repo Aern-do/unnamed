@@ -35,13 +35,16 @@ impl<'a> Cursor<'a> {
             prev: Default::default(),
         }
     }
-    pub fn next(&mut self) -> Option<char> {
+    pub fn next_char(&mut self) -> Option<char> {
         let char = self.input.next()?;
         self.current += char.len_utf8();
         Some(char)
     }
     pub fn peek(&mut self) -> Option<&char> {
         self.input.peek()
+    }
+    pub fn eof(&self) -> bool {
+        self.raw.len() == self.current
     }
     pub fn lookup(&mut self, n: usize) -> Option<&char> {
         self.input.peek_nth(n)
@@ -52,25 +55,28 @@ impl<'a> Cursor<'a> {
     pub fn span(&self) -> Span {
         Span::new(self.prev, self.current)
     }
+    pub fn slice(&self) -> &'a str {
+        &self.raw[self.prev..self.current]
+    }
     pub fn chunk(&mut self) -> Chunk<'a> {
         let span = self.span();
-        let slice = &self.raw[span.start..span.end];
+        let slice = self.slice();
         self.reset();
         Chunk::new(slice, span)
     }
 }
 #[cfg(test)]
 mod tests {
-    use crate::{shared::span::Span};
+    use crate::shared::span::Span;
 
     use super::Cursor;
 
     #[test]
     fn basic() {
         let mut cursor = Cursor::new("123123");
-        assert_eq!(Some('1'), cursor.next());
+        assert_eq!(Some('1'), cursor.next_char());
         assert_eq!(Some(&'2'), cursor.peek());
-        assert_eq!(Some('2'), cursor.next());
+        assert_eq!(Some('2'), cursor.next_char());
         let chunk = cursor.chunk();
         assert_eq!(chunk.slice, "12");
         assert_eq!(chunk.span, Span::new(0, 2));
@@ -78,11 +84,10 @@ mod tests {
     #[test]
     fn utf8() {
         let mut cursor = Cursor::new("1😎Ϩ");
-        cursor.next().unwrap();
-        cursor.next().unwrap();
+        cursor.next_char().unwrap();
+        cursor.next_char().unwrap();
         assert_eq!(cursor.span(), Span::new(0, 5));
-        cursor.next().unwrap();
+        cursor.next_char().unwrap();
         assert_eq!(cursor.span(), Span::new(0, 7));
-        
     }
 }
