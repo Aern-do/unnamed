@@ -1,62 +1,70 @@
 use std::{
     fmt::{self, Debug},
+    iter::Peekable,
     str::Chars,
 };
-
-use itertools::{peek_nth, PeekNth};
 
 use crate::shared::span::Span;
 
 use super::chunk::Chunk;
-
+const EOF: char = '\0';
 // Cursor iterating a string and producing slices of it
 #[derive(Clone)]
 pub struct Cursor<'a> {
-    input: PeekNth<Chars<'a>>,
+    input: Peekable<Chars<'a>>,
     raw: &'a str,
-    current: usize,
-    prev: usize,
+    prev: char,
+    end: usize,
+    start: usize,
 }
 impl<'a> Debug for Cursor<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Cursor")
             .field("raw", &self.raw)
-            .field("current", &self.current)
-            .field("prev", &self.prev)
+            .field("current", &self.start)
+            .field("prev", &self.end)
             .finish()
     }
 }
 impl<'a> Cursor<'a> {
     pub fn new(input: &'a str) -> Self {
-        Self {
-            input: peek_nth(input.chars()),
+        let mut cursor = Self {
+            input: input.chars().peekable(),
             raw: input,
-            current: Default::default(),
-            prev: Default::default(),
-        }
+            prev: EOF,
+            start: Default::default(),
+            end: Default::default(),
+        };
+        let mut cloned = cursor.input.clone();
+        cursor.prev = cloned.next().unwrap();
+        cursor
     }
-    pub fn next_char(&mut self) -> Option<char> {
-        let char = self.input.next()?;
-        self.current += char.len_utf8();
-        Some(char)
+    pub fn next_char(&mut self) -> char {
+        let char = self.input.next().unwrap();
+        self.end += char.len_utf8();
+        self.prev = char;
+        char
     }
-    pub fn peek(&mut self) -> Option<&char> {
-        self.input.peek()
+    pub fn peek(&self) -> char {
+        let mut cloned = self.input.clone();
+        *cloned.peek().unwrap()
     }
     pub fn eof(&self) -> bool {
-        self.raw.len() == self.current
+        self.raw.len() == self.end
     }
-    pub fn lookup(&mut self, n: usize) -> Option<&char> {
-        self.input.peek_nth(n)
+    pub fn second(&mut self) -> char {
+        let mut chars = self.input.clone();
+        chars.next().unwrap();
+        chars.next().unwrap()
     }
     pub fn reset(&mut self) {
-        self.prev = self.current;
+        self.start = self.end;
     }
     pub fn span(&self) -> Span {
-        Span::new(self.prev, self.current)
+        Span::new(self.start, self.end)
     }
     pub fn slice(&self) -> &'a str {
-        &self.raw[self.prev..self.current]
+        &self.raw[self.start..self.end]
     }
     pub fn chunk(&mut self) -> Chunk<'a> {
         let span = self.span();
@@ -74,9 +82,9 @@ mod tests {
     #[test]
     fn basic() {
         let mut cursor = Cursor::new("123123");
-        assert_eq!(Some('1'), cursor.next_char());
-        assert_eq!(Some(&'2'), cursor.peek());
-        assert_eq!(Some('2'), cursor.next_char());
+        assert_eq!('1', cursor.next_char());
+        assert_eq!('2', cursor.peek());
+        assert_eq!('2', cursor.next_char());
         let chunk = cursor.chunk();
         assert_eq!(chunk.slice, "12");
         assert_eq!(chunk.span, Span::new(0, 2));
@@ -84,10 +92,10 @@ mod tests {
     #[test]
     fn utf8() {
         let mut cursor = Cursor::new("1😎Ϩ");
-        cursor.next_char().unwrap();
-        cursor.next_char().unwrap();
+        cursor.next_char();
+        cursor.next_char();
         assert_eq!(cursor.span(), Span::new(0, 5));
-        cursor.next_char().unwrap();
+        cursor.next_char();
         assert_eq!(cursor.span(), Span::new(0, 7));
     }
 }
