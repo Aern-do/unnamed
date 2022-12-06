@@ -1,6 +1,6 @@
 use super::chunk::Chunk;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Token<'a> {
     pub kind: TokenKind,
     pub chunk: Chunk<'a>,

@@ -1,6 +1,6 @@
 use crate::shared::span::Span;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Chunk<'a> {
     pub slice: &'a str,
     pub span: Span,
