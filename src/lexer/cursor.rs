@@ -1,29 +1,17 @@
-use std::{
-    fmt::{self, Debug},
-    iter::Peekable,
-    str::Chars,
-};
+use std::{fmt::Debug, iter::Peekable, str::Chars};
 
 use crate::shared::span::Span;
 
 use super::chunk::Chunk;
 // Cursor iterating a string and producing slices of it
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Cursor<'a> {
     input: Peekable<Chars<'a>>,
     raw: &'a str,
     end: usize,
     start: usize,
 }
-impl<'a> Debug for Cursor<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Cursor")
-            .field("raw", &self.raw)
-            .field("current", &self.start)
-            .field("prev", &self.end)
-            .finish()
-    }
-}
+
 impl<'a> Cursor<'a> {
     pub fn new(input: &'a str) -> Self {
         Self {
@@ -38,17 +26,11 @@ impl<'a> Cursor<'a> {
         self.end += char.len_utf8();
         char
     }
-    pub fn peek(&self) -> char {
-        let mut cloned = self.input.clone();
-        *cloned.peek().unwrap()
+    pub fn peek(&mut self) -> char {
+        self.input.peek().copied().unwrap()
     }
     pub fn eof(&self) -> bool {
         self.raw.len() == self.end
-    }
-    pub fn second(&mut self) -> char {
-        let mut chars = self.input.clone();
-        chars.next().unwrap();
-        chars.next().unwrap()
     }
     pub fn reset(&mut self) {
         self.start = self.end;
