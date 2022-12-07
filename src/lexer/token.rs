@@ -10,6 +10,9 @@ impl<'a> Token<'a> {
     pub fn new(kind: TokenKind, chunk: Chunk<'a>) -> Self {
         Self { kind, chunk }
     }
+    pub fn slice(self) -> &'a str {
+        self.chunk.slice
+    }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TokenKind {

@@ -1,16 +1,16 @@
-use std::{iter::Peekable, slice::Iter};
+use std::iter::Peekable;
 
 use crate::lexer::token::{Token, TokenKind};
 
 use super::error::{Error, ErrorKind};
 
 #[derive(Clone, Debug)]
-pub struct Cursor<'a> {
-    tokens: Peekable<Iter<'a, Token<'a>>>,
+pub struct Cursor<'a, I: Iterator<Item = Token<'a>>> {
+    tokens: Peekable<I>,
 }
 
-impl<'a> Cursor<'a> {
-    pub fn new(tokens: Iter<'a, Token<'a>>) -> Self {
+impl<'a, I: Iterator<Item = Token<'a>>> Cursor<'a, I> {
+    pub fn new(tokens: I) -> Self {
         Self {
             tokens: tokens.peekable(),
         }
@@ -19,13 +19,12 @@ impl<'a> Cursor<'a> {
     pub fn next_token(&mut self) -> Result<Token<'a>, Error<'a>> {
         self.tokens
             .next()
-            .copied()
             .ok_or_else(|| Error::empty(ErrorKind::UnexpectedEof))
     }
     pub fn peek(&mut self) -> Result<Token<'a>, Error<'a>> {
         self.tokens
             .peek()
-            .map(|token| **token)
+            .copied()
             .ok_or_else(|| Error::empty(ErrorKind::UnexpectedEof))
     }
     pub fn test(&mut self, expected: &'static [TokenKind]) -> Result<bool, Error<'a>> {
@@ -64,5 +63,58 @@ impl<'a> Cursor<'a> {
                 chunk,
             ))
         }
+    }
+}
+#[cfg(test)]
+mod tests {
+    use std::vec::IntoIter;
+
+    use crate::lexer::{
+        self,
+        token::{Token, TokenKind},
+        Lexer,
+    };
+
+    use super::Cursor;
+
+    fn cursor(input: &'static str) -> Cursor<'static, IntoIter<Token<'static>>> {
+        let cursor = lexer::cursor::Cursor::new(input);
+        let lexer = Lexer::new(cursor);
+        let cursor = Cursor::new(lexer.collect::<Result<Vec<_>, _>>().unwrap().into_iter());
+        cursor
+    }
+    #[test]
+    fn next_token() {
+        let mut cursor = cursor("12 34 78");
+        assert_eq!(cursor.next_token().unwrap().slice(), "12");
+        assert_eq!(cursor.next_token().unwrap().slice(), "34");
+        assert_eq!(cursor.next_token().unwrap().slice(), "78");
+    }
+    #[test]
+    fn peek() {
+        let mut cursor = cursor("12 34 78");
+        assert_eq!(cursor.next_token().unwrap().slice(), "12");
+        assert_eq!(cursor.peek().unwrap().slice(), "34");
+        assert_eq!(cursor.peek().unwrap().slice(), "34");
+        assert_eq!(cursor.next_token().unwrap().slice(), "34");
+    }
+    #[test]
+    fn eof() {
+        let mut cursor = cursor("12 34 78");
+        assert_eq!(cursor.next_token().unwrap().slice(), "12");
+        assert_eq!(cursor.next_token().unwrap().slice(), "34");
+        assert_eq!(cursor.next_token().unwrap().slice(), "78");
+        assert!(cursor.eof());
+    }
+    #[test]
+    fn test() {
+        let mut cursor = cursor("abcd");
+        assert!(cursor.test(&[TokenKind::Identifier]).unwrap());
+    }
+    #[test]
+    #[should_panic]
+    fn consume() {
+        let mut cursor = cursor("abcd");
+        cursor.consume(&[TokenKind::Integer]).unwrap();
     }
 }

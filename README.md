@@ -1,6 +1,6 @@
 # Unnamed
-Simple programming language written on Rust
+Simple programming language written in Rust
 
 ## To Do
 
-- [ ] Refactor the parser and add tests
+- [x] Refactor the parser and add tests

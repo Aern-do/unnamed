@@ -6,7 +6,7 @@ pub mod statement;
 pub type BoxedNode<'a> = Box<Node<'a>>;
 pub type Block<'a> = Vec<Node<'a>>;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Node<'a> {
     Integer(&'a str),
     Float(&'a str),

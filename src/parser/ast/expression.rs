@@ -1,7 +1,7 @@
-use super::{Block, BoxedNode};
+use super::{BoxedNode, Node};
 macro_rules! operator {
     ($operator: ident; $($token: ident),+) => {
-        #[derive(Clone, Copy, Debug)]
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
         pub enum $operator {
             $($token),+
         }
@@ -49,7 +49,7 @@ impl PrefixOperator {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Expression<'a> {
     Infix {
         lhs: BoxedNode<'a>,
@@ -61,7 +61,7 @@ pub enum Expression<'a> {
         operator: PrefixOperator,
     },
     Call {
-        name: BoxedNode<'a>,
-        arguments: Block<'a>,
+        name: &'a str,
+        arguments: Vec<Node<'a>>,
     },
 }

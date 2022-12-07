@@ -57,7 +57,7 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(cursor: Cursor<'a>) -> Self {
+    pub fn new(cursor: Cursor<'a>) -> Lexer<'a> {
         Self { cursor }
     }
 
@@ -178,6 +178,13 @@ impl<'a> Lexer<'a> {
             return self.lex_identifier();
         }
         self.lex_other()
+    }
+}
+impl<'a> Iterator for Lexer<'a> {
+    type Item = Result<Token<'a>, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.lex_with_skips()
     }
 }
 #[cfg(test)]

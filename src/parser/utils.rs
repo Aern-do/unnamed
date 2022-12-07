@@ -1,8 +1,8 @@
-use crate::lexer::token::TokenKind;
+use crate::lexer::token::{Token, TokenKind};
 
 use super::{error::Error, Parser};
 
-impl<'a> Parser<'a> {
+impl<'a, I: Iterator<Item = Token<'a>>> Parser<'a, I> {
     pub fn parenthesized<T, F: FnOnce(&mut Self) -> Result<T, Error<'a>>>(
         &mut self,
         parse: F,
@@ -12,7 +12,7 @@ impl<'a> Parser<'a> {
         self.cursor.consume(&[TokenKind::RightParenthesis])?;
         Ok(parsed)
     }
-    pub fn arguments<T, F: Fn(&mut Parser<'a>) -> Result<T, Error<'a>>>(
+    pub fn arguments<T, F: Fn(&mut Parser<'a, I>) -> Result<T, Error<'a>>>(
         &mut self,
         parse: F,
     ) -> Result<Vec<T>, Error<'a>> {

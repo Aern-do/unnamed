@@ -7,13 +7,11 @@ use std::{
 use crate::shared::span::Span;
 
 use super::chunk::Chunk;
-const EOF: char = '\0';
 // Cursor iterating a string and producing slices of it
 #[derive(Clone)]
 pub struct Cursor<'a> {
     input: Peekable<Chars<'a>>,
     raw: &'a str,
-    prev: char,
     end: usize,
     start: usize,
 }
@@ -28,21 +26,16 @@ impl<'a> Debug for Cursor<'a> {
 }
 impl<'a> Cursor<'a> {
     pub fn new(input: &'a str) -> Self {
-        let mut cursor = Self {
+        Self {
             input: input.chars().peekable(),
             raw: input,
-            prev: EOF,
             start: Default::default(),
             end: Default::default(),
-        };
-        let mut cloned = cursor.input.clone();
-        cursor.prev = cloned.next().unwrap();
-        cursor
+        }
     }
     pub fn next_char(&mut self) -> char {
         let char = self.input.next().unwrap();
         self.end += char.len_utf8();
-        self.prev = char;
         char
     }
     pub fn peek(&self) -> char {
