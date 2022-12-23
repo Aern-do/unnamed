@@ -17,18 +17,17 @@ impl<'a, T: Iterator<Item = Token<'a>>> Parser<'a, T> {
     pub fn parse_function(&mut self) -> Result<Function<'a>, Error<'a>> {
         self.cursor.consume(&[TokenKind::Function])?;
         let name = self.cursor.consume(&[TokenKind::Identifier])?.slice();
-
-        self.cursor.consume(&[TokenKind::LeftParenthesis])?;
-        let arguments = self.arguments(|parser| {
-            let name = parser.cursor.consume(&[TokenKind::Identifier])?.slice();
-            parser.cursor.consume(&[TokenKind::Colon])?;
-            let argument_type = parser.cursor.consume(&[TokenKind::Identifier])?.slice();
-            Ok(Argument {
-                name,
-                argument_type,
+        let arguments = self.parenthesized(|parser| {
+            parser.arguments(|parser| {
+                let name = parser.cursor.consume(&[TokenKind::Identifier])?.slice();
+                parser.cursor.consume(&[TokenKind::Colon])?;
+                let argument_type = parser.cursor.consume(&[TokenKind::Identifier])?.slice();
+                Ok(Argument {
+                    name,
+                    argument_type,
+                })
             })
         })?;
-        self.cursor.consume(&[TokenKind::RightParenthesis])?;
         self.cursor.consume(&[TokenKind::Arrow])?;
         let return_type = self.cursor.consume(&[TokenKind::Identifier])?.slice();
         let body = self.parse_block()?;
