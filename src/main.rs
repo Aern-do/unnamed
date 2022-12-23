@@ -40,7 +40,7 @@ fn build_program(input: String) -> result::Result<Program, builder::error::Error
     builder.procedure("main");
     compile(&mut builder, expression);
     builder.halt()?;
-    Ok(builder.build())
+    builder.build()
 }
 pub fn compile(builder: &mut Builder, node: Node) {
     match node {

@@ -4,4 +4,5 @@ pub enum Error {
     UnknownProcedure,
     UnknownNative,
     UnknownMarker,
+    MissingMain,
 }

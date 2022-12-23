@@ -86,18 +86,19 @@ impl Machine {
         Program {
             instructions,
             procedures: markers,
+            entry_point,
         }: Program,
         stack: usize,
         frames: usize,
     ) -> Self {
         Self {
             instructions,
+            ip: markers[entry_point],
             markers,
             stack: Vec::with_capacity(stack),
             frames: Vec::with_capacity(frames),
             pending_increment: true,
             natives: Default::default(),
-            ip: Default::default(),
             halted: Default::default(),
         }
     }

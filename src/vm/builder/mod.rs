@@ -1,16 +1,19 @@
 pub mod error;
 
-use std::{borrow::Borrow, collections::HashMap, hash::Hash};
+use std::{
+    borrow::Borrow,
+    collections::{BTreeMap, HashMap},
+};
 
 use self::error::Error;
 
 use super::{instruction::Instruction, program::Program, value::Value};
 #[derive(Clone, Debug, Default)]
 pub struct Incremental<K, V> {
-    mapping: HashMap<K, (V, usize)>,
+    mapping: BTreeMap<K, (V, usize)>,
     offset: usize,
 }
-impl<K: Hash + Eq, V> Incremental<K, V> {
+impl<K: Ord, V> Incremental<K, V> {
     pub fn insert(&mut self, key: K, value: V) -> usize {
         let entry_offset = self.offset;
         self.offset += 1;
@@ -19,22 +22,22 @@ impl<K: Hash + Eq, V> Incremental<K, V> {
     }
     pub fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
     where
-        K: Borrow<Q>,
-        Q: Hash + Eq,
+        K: Borrow<Q> + Ord,
+        Q: Ord,
     {
         self.mapping.get(key).map(|value| &value.0)
     }
     pub fn get_mut<Q: ?Sized>(&mut self, key: &Q) -> Option<&mut V>
     where
-        K: Borrow<Q>,
-        Q: Hash + Eq,
+        K: Borrow<Q> + Ord,
+        Q: Ord,
     {
         self.mapping.get_mut(key).map(|value| &mut value.0)
     }
     pub fn get_id<Q: ?Sized>(&self, key: &Q) -> Option<usize>
     where
-        K: Borrow<Q>,
-        Q: Hash + Eq,
+        K: Borrow<Q> + Ord,
+        Q: Ord,
     {
         self.mapping.get(key).map(|value| value.1)
     }
@@ -193,9 +196,10 @@ impl Builder {
             .push(PendingInstruction::Generated(Instruction::Native(id)));
         Ok(())
     }
-    pub fn build(self) -> Program {
+    pub fn build(self) -> Result<Program, Error> {
         let mut procedures = vec![];
         let mut instructions = vec![];
+        let entry_point = self.procedures.get_id("main").ok_or(Error::MissingMain)?;
         // Pregenerate instruction pointer mappings
         let mut no_lookup_len = None;
         for (.., (procedure_instructions, id)) in self.procedures.mapping.iter() {
@@ -222,10 +226,11 @@ impl Builder {
                 }
             }
         }
-        Program {
+        Ok(Program {
             procedures,
             instructions,
-        }
+            entry_point,
+        })
     }
 }
 macro_rules! zero_op {
@@ -253,12 +258,12 @@ mod tests {
         let mut builder = Builder::with_default_natives();
         builder.procedure("main");
         build(&mut builder).unwrap();
-        assert_eq!(builder.build().instructions, expected)
+        assert_eq!(builder.build().unwrap().instructions, expected)
     }
     fn test_program<F: FnOnce(&mut Builder) -> Result<(), Error>>(build: F, expected: Program) {
         let mut builder = Builder::with_default_natives();
         build(&mut builder).unwrap();
-        assert_eq!(builder.build(), expected)
+        assert_eq!(builder.build().unwrap(), expected)
     }
     #[test]
     fn builds_zero_op() {
@@ -316,7 +321,6 @@ mod tests {
     fn builds_correctly_mapped_calls() {
         test_program(
             |builder| {
-                builder.procedure("main");
                 builder.procedure("add");
                 builder.procedure("main");
                 builder.push(5)?;
@@ -330,15 +334,16 @@ mod tests {
                 Ok(())
             },
             Program {
-                procedures: vec![0, 5],
+                procedures: vec![0, 2],
+                entry_point: 1,
                 instructions: vec![
-                    Instruction::Push(Value::Integer(5)),
-                    Instruction::Push(Value::Integer(5)),
-                    Instruction::Add,
-                    Instruction::Call(1),
-                    Instruction::Halt,
                     Instruction::Add,
                     Instruction::Ret,
+                    Instruction::Push(Value::Integer(5)),
+                    Instruction::Push(Value::Integer(5)),
+                    Instruction::Add,
+                    Instruction::Call(0),
+                    Instruction::Halt,
                 ],
             },
         );
@@ -359,6 +364,7 @@ mod tests {
             },
             Program {
                 procedures: vec![0],
+                entry_point: 0,
                 instructions: vec![
                     Instruction::Push(Value::Integer(5)),
                     Instruction::Push(Value::Integer(5)),
