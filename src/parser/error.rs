@@ -57,7 +57,7 @@ impl Display for ErrorKind {
 
 impl<'source> Display for Error<'source> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let None = self.chunk {
+        if self.chunk.is_none() {
             writeln!(
                 f,
                 "{}: {kind}",
