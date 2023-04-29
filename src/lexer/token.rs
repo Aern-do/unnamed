@@ -1,55 +1,120 @@
-use super::chunk::Chunk;
+use std::{
+    cmp::max,
+    fmt::{self, Debug, Display},
+    ops::Add,
+    path::Path,
+};
 
-#[derive(Clone, Copy, Debug)]
-pub struct Token<'a> {
-    pub kind: TokenKind,
-    pub chunk: Chunk<'a>,
+#[derive(Clone, Copy, Debug, Eq)]
+pub struct Position<'source> {
+    start: usize,
+    end: usize,
+    line: usize,
+    column: usize,
+    path: &'source Path,
 }
 
-impl<'a> Token<'a> {
-    pub fn new(kind: TokenKind, chunk: Chunk<'a>) -> Self {
+impl<'source> PartialEq for Position<'source> {
+    fn eq(&self, other: &Self) -> bool {
+        self.start == other.start && self.end == other.end
+    }
+}
+
+impl<'source> Position<'source> {
+    pub fn new(start: usize, end: usize, line: usize, column: usize, path: &'source Path) -> Self {
+        Self {
+            start,
+            end,
+            line,
+            column,
+            path,
+        }
+    }
+}
+
+impl<'source> Add for Position<'source> {
+    type Output = Position<'source>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::new(
+            self.start,
+            rhs.end,
+            max(self.line, rhs.line),
+            max(self.column, rhs.column),
+            self.path,
+        )
+    }
+}
+
+impl<'source> Display for Position<'source> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}:{}:{}",
+            self.path.display(),
+            self.line + 1,
+            self.column
+        )
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Chunk<'source> {
+    pub position: Position<'source>,
+    pub slice: &'source str,
+}
+
+impl<'source> Chunk<'source> {
+    pub fn new(span: Position<'source>, slice: &'source str) -> Self {
+        Self {
+            position: span,
+            slice,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Token<'source> {
+    pub kind: TokenKind,
+    pub chunk: Chunk<'source>,
+}
+
+impl<'source> Token<'source> {
+    pub fn new(kind: TokenKind, chunk: Chunk<'source>) -> Self {
         Self { kind, chunk }
     }
-    pub fn slice(self) -> &'a str {
-        self.chunk.slice
-    }
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenKind {
     Integer,
-    Float,
-    Identifier,
-
-    Function,
-    If,
-    Else,
-    While,
-    Let,
-    Mut,
-    Return,
-
+    Plus,
+    Minus,
+    Multiply,
+    Division,
     LeftParenthesis,
     RightParenthesis,
-    LeftBrace,
-    RightBrace,
+}
+impl Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TokenKind::Integer => write!(f, "integer"),
+            TokenKind::Plus => write!(f, "plus"),
+            TokenKind::Minus => write!(f, "minus"),
+            TokenKind::Multiply => write!(f, "multiply"),
+            TokenKind::Division => write!(f, "division"),
+            TokenKind::LeftParenthesis => write!(f, "left parenthesis"),
+            TokenKind::RightParenthesis => write!(f, "right parenthesis"),
+        }
+    }
+}
 
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Assignment,
-    Equal,
-    Greater,
-    GreaterEq,
-    Less,
-    LessEq,
-    Not,
-    NotEq,
-    And,
-    Or,
-
-    Comma,
-    Arrow,
-    Semicolon,
-    Colon,
+impl<'source> Display for Token<'source> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}: {} at {}",
+            self.kind, self.chunk.slice, self.chunk.position
+        )
+    }
 }
