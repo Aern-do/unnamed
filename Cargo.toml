@@ -8,3 +8,4 @@ unicode-ident = "1.0.5"
 serde = { version = "1.0.151", features = ["derive"] }
 bincode = "1.3.3"
 paste = "1.0.11"
+owo-colors = { version = "3.5.0", features = ["supports-colors"]}

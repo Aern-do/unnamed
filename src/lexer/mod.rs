@@ -26,7 +26,7 @@ impl<'source> Lexer<'source> {
     }
 
     pub fn lex_integer(&mut self) -> Result<Token<'source>> {
-        while !self.cursor.eof() && self.is_integer() {
+        while !self.cursor.is_eof() && self.is_integer() {
             self.cursor.next_char();
         }
 
@@ -34,7 +34,7 @@ impl<'source> Lexer<'source> {
     }
 
     pub fn skip_whitespaces(&mut self) {
-        while !self.cursor.eof() && self.is_whitespace() {
+        while !self.cursor.is_eof() && self.is_whitespace() {
             self.cursor.next_char();
         }
 
@@ -70,7 +70,7 @@ impl<'source> Iterator for Lexer<'source> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.skip_whitespaces();
-        if self.cursor.eof() {
+        if self.cursor.is_eof() {
             return None;
         }
         Some(self.lex())
@@ -81,20 +81,21 @@ impl<'source> Iterator for Lexer<'source> {
 mod tests {
     use super::{
         cursor::Cursor,
-        token::{Chunk, Span, Token, TokenKind},
+        token::{Chunk, Position, Token, TokenKind},
         Lexer,
     };
+    use std::path::Path;
 
     macro_rules! tests {
         ($($test_name: ident($input: literal) = $($kind: ident: $slice: literal at $start: literal..$end: literal),+);* $(;)*) => {
             $(
                 #[test]
                 fn $test_name() {
-                    let cursor = Cursor::new($input);
+                    let cursor = Cursor::new($input, &Path::new("test.u"));
                     let mut lexer = Lexer::new(cursor);
                     $(
                         assert_eq!(Token::new(TokenKind::$kind, Chunk::new(
-                            Span::new($start, $end),
+                            Position::new($start, $end, 0, 0, Path::new("test.u")),
                             $slice
                         )), lexer.next().unwrap().unwrap());
                     )*
@@ -118,21 +119,21 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_unexpected_token() {
-        let cursor = Cursor::new("`");
+        let cursor = Cursor::new("`", &Path::new("main.u"));
         let mut lexer = Lexer::new(cursor);
         lexer.next().unwrap().unwrap();
     }
 
     #[test]
     fn test_empty() {
-        let cursor = Cursor::new("");
+        let cursor = Cursor::new("", &Path::new("main.u"));
         let mut lexer = Lexer::new(cursor);
         assert!(lexer.next().is_none())
     }
 
     #[test]
     fn test_empty_whitespaces() {
-        let cursor = Cursor::new("    \n\t");
+        let cursor = Cursor::new("    \n\t", &Path::new("main.u"));
         let mut lexer = Lexer::new(cursor);
         assert!(lexer.next().is_none())
     }
