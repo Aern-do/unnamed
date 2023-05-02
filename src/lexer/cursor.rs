@@ -84,10 +84,7 @@ mod tests {
         assert_eq!('2', cursor.next_char());
         let chunk = cursor.chunk();
         assert_eq!(chunk.slice, "12");
-        assert_eq!(
-            chunk.position,
-            Position::new(0, 2, 0, 2, &Path::new("main.u"))
-        );
+        assert_eq!(chunk.position, Position::new(0, 2, 0, 2, &Path::new("main.u")));
     }
 
     #[test]
@@ -95,15 +92,9 @@ mod tests {
         let mut cursor = Cursor::new("1😎Ϩ", &Path::new("main.u"));
         cursor.next_char();
         cursor.next_char();
-        assert_eq!(
-            cursor.span(),
-            Position::new(0, 5, 0, 2, &Path::new("main.u"))
-        );
+        assert_eq!(cursor.span(), Position::new(0, 5, 0, 2, &Path::new("main.u")));
         cursor.next_char();
-        assert_eq!(
-            cursor.span(),
-            Position::new(0, 7, 0, 3, &Path::new("main.u"))
-        );
+        assert_eq!(cursor.span(), Position::new(0, 7, 0, 3, &Path::new("main.u")));
     }
 
     #[test]
@@ -113,9 +104,6 @@ mod tests {
         cursor.next_char();
         cursor.next_char();
         cursor.next_char();
-        assert_eq!(
-            cursor.span(),
-            Position::new(0, 4, 3, 1, &Path::new("main.u"))
-        );
+        assert_eq!(cursor.span(), Position::new(0, 4, 3, 1, &Path::new("main.u")));
     }
 }

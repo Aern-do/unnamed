@@ -22,13 +22,7 @@ impl<'source> PartialEq for Position<'source> {
 
 impl<'source> Position<'source> {
     pub fn new(start: usize, end: usize, line: usize, column: usize, path: &'source Path) -> Self {
-        Self {
-            start,
-            end,
-            line,
-            column,
-            path,
-        }
+        Self { start, end, line, column, path }
     }
 }
 
@@ -48,13 +42,7 @@ impl<'source> Add for Position<'source> {
 
 impl<'source> Display for Position<'source> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}:{}:{}",
-            self.path.display(),
-            self.line + 1,
-            self.column
-        )
+        write!(f, "{}:{}:{}", self.path.display(), self.line + 1, self.column)
     }
 }
 
@@ -66,10 +54,7 @@ pub struct Chunk<'source> {
 
 impl<'source> Chunk<'source> {
     pub fn new(span: Position<'source>, slice: &'source str) -> Self {
-        Self {
-            position: span,
-            slice,
-        }
+        Self { position: span, slice }
     }
 }
 
@@ -111,10 +96,6 @@ impl Display for TokenKind {
 
 impl<'source> Display for Token<'source> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}: {} at {}",
-            self.kind, self.chunk.slice, self.chunk.position
-        )
+        write!(f, "{}: {} at {}", self.kind, self.chunk.slice, self.chunk.position)
     }
 }

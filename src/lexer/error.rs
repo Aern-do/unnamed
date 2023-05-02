@@ -1,24 +1,13 @@
-use std::{
-    error,
-    fmt::{self, Display},
-    result,
-};
+use std::fmt::{self, Display};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Error {
+pub enum ErrorKind {
     UnexpectedToken,
-    UnexpectedEof,
 }
-
-impl Display for Error {
+impl Display for ErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::UnexpectedToken => write!(f, "unexpected token"),
-            Error::UnexpectedEof => write!(f, "unexpected eof"),
+            ErrorKind::UnexpectedToken => write!(f, "unexpected token"),
         }
     }
 }
-
-impl error::Error for Error {}
-
-pub type Result<T> = result::Result<T, Error>;

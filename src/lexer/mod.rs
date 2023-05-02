@@ -1,6 +1,11 @@
+use crate::common::{
+    error::{Error, Result},
+    CommonErrorKind,
+};
+
 use self::{
     cursor::Cursor,
-    error::{Error, Result},
+    error::ErrorKind,
     token::{Token, TokenKind},
 };
 
@@ -25,7 +30,7 @@ impl<'source> Lexer<'source> {
         self.cursor.peek().is_whitespace()
     }
 
-    pub fn lex_integer(&mut self) -> Result<Token<'source>> {
+    pub fn lex_integer(&mut self) -> Result<'source, Token<'source>> {
         while !self.cursor.is_eof() && self.is_integer() {
             self.cursor.next_char();
         }
@@ -41,22 +46,26 @@ impl<'source> Lexer<'source> {
         self.cursor.reset();
     }
 
-    pub fn lex_special_symbols(&mut self) -> Result<Token<'source>> {
-        let kind = match self.cursor.peek() {
+    pub fn lex_special_symbols(&mut self) -> Result<'source, Token<'source>> {
+        let kind = match self.cursor.next_char() {
             '+' => TokenKind::Plus,
             '-' => TokenKind::Minus,
             '*' => TokenKind::Multiply,
             '/' => TokenKind::Division,
             '(' => TokenKind::LeftParenthesis,
             ')' => TokenKind::RightParenthesis,
-            _ => return Err(Error::UnexpectedToken),
+            _ => {
+                return Err(Error::new(
+                    CommonErrorKind::Lexer(ErrorKind::UnexpectedToken),
+                    Some(self.cursor.chunk()),
+                ))
+            }
         };
-        self.cursor.next_char();
 
         Ok(Token::new(kind, self.cursor.chunk()))
     }
 
-    pub fn lex(&mut self) -> Result<Token<'source>> {
+    pub fn lex(&mut self) -> Result<'source, Token<'source>> {
         if self.is_integer() {
             return self.lex_integer();
         }
@@ -66,7 +75,7 @@ impl<'source> Lexer<'source> {
 }
 
 impl<'source> Iterator for Lexer<'source> {
-    type Item = Result<Token<'source>>;
+    type Item = Result<'source, Token<'source>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.skip_whitespaces();
