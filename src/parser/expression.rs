@@ -6,7 +6,7 @@ use crate::{
 
 use super::{
     cursor::Cursor,
-    primitive::{Division, Integer, LeftParenthesis, Minus, Multiply, Plus},
+    primitive::{Division, Integer, LeftParenthesis, Minus, Multiply, Plus, RightParenthesis},
     Parse,
 };
 
@@ -36,10 +36,18 @@ impl<'source> Expression<'source> {
     ) -> Result<'source, Self> {
         let mut lhs = match cursor.parse::<Lhs>()? {
             Lhs::Integer(integer) => Expression::Integer(integer),
-            Lhs::LeftParenthesis(_) => todo!(),
+            Lhs::LeftParenthesis(..) => {
+                let expression = cursor.parse::<Expression>()?;
+                cursor.parse::<RightParenthesis>()?;
+                expression
+            }
         };
 
         loop {
+            if cursor.test(&[TokenKind::RightParenthesis])? {
+                break;
+            }
+
             let operator = match cursor.parse_without_consume::<Operator>() {
                 Ok(op) => op,
                 Err(err) if err.kind.is_eof() => break,

@@ -38,7 +38,7 @@ impl<'source, I: Iterator<Item = Token<'source>>> Cursor<'source, I> {
         match self.peek() {
             Ok(token) if expected.contains(&token.kind) => Ok(true),
             Ok(..) => Ok(false),
-            
+
             Err(err) if err.kind == CommonErrorKind::Parser(ErrorKind::UnexpectedEof) => Ok(false),
             Err(err) => Err(err),
         }
@@ -49,7 +49,7 @@ impl<'source, I: Iterator<Item = Token<'source>>> Cursor<'source, I> {
             self.next_token()
         } else {
             let token = self.peek()?;
-            
+
             Err(Error::new(
                 CommonErrorKind::Parser(ErrorKind::UnexpectedToken {
                     expected,
