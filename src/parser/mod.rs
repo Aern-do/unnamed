@@ -17,11 +17,13 @@ macro_rules! group {
                 $kind($kind$(<$lt_kind>)?)
             ),*
         }
+
         impl<'source> Parse<'source> for $name<'source> {
             fn parse<I: Iterator<Item = Token<'source>>>(cursor: &mut Cursor<'source, I>) -> Result<'source, Self> {
                 let token = cursor.consume(&[$(
                     TokenKind::$kind
                 ),*])?;
+                
                 Ok(match token.kind {
                     $(
                         TokenKind::$kind => Self::$kind($kind::from_slice(token.chunk.slice)),
@@ -31,6 +33,7 @@ macro_rules! group {
             }
         }
     };
+
     ($name: ident: $($kind: ident),*) => {
         #[derive(Debug, Clone)]
         pub enum $name {
@@ -38,11 +41,13 @@ macro_rules! group {
                 $kind($kind)
             ),*
         }
+        
         impl<'source> Parse<'source> for $name {
             fn parse<I: Iterator<Item = Token<'source>>>(cursor: &mut Cursor<'source, I>) -> Result<'source, Self> {
                 let token = cursor.consume(&[$(
                     TokenKind::$kind
                 ),*])?;
+
                 Ok(match token.kind {
                     $(
                         TokenKind::$kind => Self::$kind($kind::from_slice(token.chunk.slice)),

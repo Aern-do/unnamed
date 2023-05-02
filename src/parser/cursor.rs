@@ -20,30 +20,36 @@ impl<'source, I: Iterator<Item = Token<'source>>> Cursor<'source, I> {
     pub fn new(iter: I) -> Self {
         Self { tokens: iter.peekable() }
     }
+
     pub fn next_token(&mut self) -> Result<'source, Token<'source>> {
         self.tokens
             .next()
             .ok_or_else(|| Error::new(CommonErrorKind::Parser(ErrorKind::UnexpectedEof), None))
     }
+
     pub fn peek(&mut self) -> Result<'source, Token<'source>> {
         self.tokens
             .peek()
             .copied()
             .ok_or_else(|| Error::new(CommonErrorKind::Parser(ErrorKind::UnexpectedEof), None))
     }
+
     pub fn test(&mut self, expected: &'static [TokenKind]) -> Result<'source, bool> {
         match self.peek() {
             Ok(token) if expected.contains(&token.kind) => Ok(true),
             Ok(..) => Ok(false),
+            
             Err(err) if err.kind == CommonErrorKind::Parser(ErrorKind::UnexpectedEof) => Ok(false),
             Err(err) => Err(err),
         }
     }
+
     pub fn consume(&mut self, expected: &'static [TokenKind]) -> Result<'source, Token<'source>> {
         if self.test(expected)? {
             self.next_token()
         } else {
             let token = self.peek()?;
+            
             Err(Error::new(
                 CommonErrorKind::Parser(ErrorKind::UnexpectedToken {
                     expected,
@@ -53,12 +59,14 @@ impl<'source, I: Iterator<Item = Token<'source>>> Cursor<'source, I> {
             ))
         }
     }
+
     pub fn parse<P: Parse<'source>>(&mut self) -> Result<'source, P>
     where
         I: Clone,
     {
         P::parse(self)
     }
+
     pub fn parse_without_consume<P: Parse<'source>>(&mut self) -> Result<'source, P>
     where
         I: Clone,

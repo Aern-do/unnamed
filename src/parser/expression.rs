@@ -38,23 +38,28 @@ impl<'source> Expression<'source> {
             Lhs::Integer(integer) => Expression::Integer(integer),
             Lhs::LeftParenthesis(_) => todo!(),
         };
+
         loop {
             let operator = match cursor.parse_without_consume::<Operator>() {
                 Ok(op) => op,
                 Err(err) if err.kind.is_eof() => break,
                 Err(err) => return Err(err),
             };
+
             let (l_bp, r_bp) = operator.binding_power();
             if l_bp < min_bp {
                 break;
             }
+
             cursor.next_token()?;
             let rhs = Expression::parse_bp(cursor, r_bp)?;
+
             lhs = Expression::Infix { lhs: Box::new(lhs), operator, rhs: Box::new(rhs) }
         }
         Ok(lhs)
     }
 }
+
 impl<'source> Parse<'source> for Expression<'source> {
     fn parse<I: Iterator<Item = Token<'source>> + Clone>(
         cursor: &mut Cursor<'source, I>,

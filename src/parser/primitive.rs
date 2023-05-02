@@ -37,6 +37,7 @@ impl<'source> Integer<'source> {
         Self(slice)
     }
 }
+
 impl<'source> Parse<'source> for Integer<'source> {
     fn parse<I: Iterator<Item = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
