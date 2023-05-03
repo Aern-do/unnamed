@@ -13,10 +13,10 @@ pub fn eval(expression: Expression) -> f64 {
             let lhs = eval(*lhs);
             let rhs = eval(*rhs);
             match operator {
-                Operator::Plus(..) => lhs + rhs,
-                Operator::Minus(..) => lhs - rhs,
-                Operator::Multiply(..) => lhs * rhs,
-                Operator::Division(..) => lhs / rhs,
+                Operator::Plus => lhs + rhs,
+                Operator::Minus => lhs - rhs,
+                Operator::Multiply => lhs * rhs,
+                Operator::Division => lhs / rhs,
             }
         }
     }

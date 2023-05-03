@@ -1,31 +1,67 @@
 use crate::{
     common::error::Result,
-    group,
     lexer::token::{Token, TokenKind},
 };
 
 use super::{
     cursor::Cursor,
     primitive::{
-        Division, Float, Integer, LeftParenthesis, Minus, Multiply, Plus, RightParenthesis,
+        Float, Integer, RightParenthesis,
     },
     Parse,
 };
 
-group!(Operator: Plus, Minus, Multiply, Division);
-
-group!(Literal<'source>: Integer<'source>, Float<'source>);
+#[derive(Debug, Clone)]
+pub enum Operator {
+    Plus,
+    Minus,
+    Multiply,
+    Division
+}
 
 impl Operator {
     pub fn binding_power(&self) -> (u8, u8) {
         match self {
-            Operator::Plus(..) | Operator::Minus(..) => (1, 2),
-            Operator::Multiply(..) | Operator::Division(..) => (3, 4),
+            Operator::Plus | Operator::Minus => (1, 2),
+            Operator::Multiply | Operator::Division => (3, 4),
         }
     }
 }
 
-group!(Lhs<'source>: Integer<'source>, Float<'source>, LeftParenthesis);
+
+impl<'source> Parse<'source> for Operator {
+    fn parse<I: Iterator<Item = Token<'source>> + Clone>(
+        cursor: &mut Cursor<'source, I>,
+    ) -> Result<'source, Self> {
+        let token = cursor.consume(&[TokenKind::Plus, TokenKind::Minus, TokenKind::Multiply, TokenKind::Division])?;
+        Ok(match token.kind {
+            TokenKind::Plus => Operator::Plus,
+            TokenKind::Minus => Operator::Minus,
+            TokenKind::Multiply => Operator::Multiply,
+            TokenKind::Division => Operator::Division,
+            _ => unreachable!()
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Literal<'source> {
+    Integer(Integer<'source>),
+    Float(Float<'source>),
+}
+
+impl<'source> Parse<'source> for Literal<'source> {
+    fn parse<I: Iterator<Item = Token<'source>> + Clone>(
+        cursor: &mut Cursor<'source, I>,
+    ) -> Result<'source, Self> {
+        let token = cursor.test_and_return(&[TokenKind::Integer, TokenKind::Float])?;
+        Ok(match token.kind {
+            TokenKind::Integer => Self::Integer(cursor.parse()?),
+            TokenKind::Float => Self::Float(cursor.parse()?),
+            _ => unreachable!(),
+        })
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum Expression<'source> {
@@ -38,14 +74,15 @@ impl<'source> Expression<'source> {
         cursor: &mut Cursor<'source, I>,
         min_bp: u8,
     ) -> Result<'source, Self> {
-        let mut lhs = match cursor.parse::<Lhs>()? {
-            Lhs::Integer(integer) => Expression::Literal(Literal::Integer(integer)),
-            Lhs::Float(float) => Expression::Literal(Literal::Float(float)),
-            Lhs::LeftParenthesis(..) => {
+        let lhs = cursor.test_and_return(&[TokenKind::Integer, TokenKind::Float, TokenKind::LeftParenthesis])?;
+        let mut lhs = match lhs.kind {
+            TokenKind::Float | TokenKind::Integer => Expression::Literal(cursor.parse()?),
+            TokenKind::LeftParenthesis => {
                 let expression = cursor.parse::<Expression>()?;
                 cursor.parse::<RightParenthesis>()?;
                 expression
-            }
+            },
+            _ => unreachable!()
         };
 
         loop {

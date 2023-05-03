@@ -60,6 +60,22 @@ impl<'source, I: Iterator<Item = Token<'source>>> Cursor<'source, I> {
         }
     }
 
+    pub fn test_and_return(&mut self, expected: &'static [TokenKind]) -> Result<'source, Token<'source>> {
+        if self.test(expected)? {
+            self.peek()
+        } else {
+            let token = self.peek()?;
+
+            Err(Error::new(
+                CommonErrorKind::Parser(ErrorKind::UnexpectedToken {
+                    expected,
+                    received: Some(token.kind),
+                }),
+                Some(token.chunk),
+            ))
+        }
+    }
+
     pub fn parse<P: Parse<'source>>(&mut self) -> Result<'source, P>
     where
         I: Clone,
