@@ -30,7 +30,7 @@ macro_rules! implement_primitive {
 implement_primitive!(Plus, Minus, Multiply, Division, LeftParenthesis, RightParenthesis);
 
 #[derive(Debug, Clone)]
-pub struct Integer<'source>(&'source str);
+pub struct Integer<'source>(pub &'source str);
 
 impl<'source> Integer<'source> {
     pub fn from_slice(slice: &'source str) -> Self {
