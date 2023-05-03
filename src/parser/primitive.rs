@@ -45,3 +45,20 @@ impl<'source> Parse<'source> for Integer<'source> {
         Ok(Self(cursor.consume(&[TokenKind::Integer])?.chunk.slice))
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct Float<'source>(pub &'source str);
+
+impl<'source> Float<'source> {
+    pub fn from_slice(slice: &'source str) -> Self {
+        Self(slice)
+    }
+}
+
+impl<'source> Parse<'source> for Float<'source> {
+    fn parse<I: Iterator<Item = Token<'source>>>(
+        cursor: &mut Cursor<'source, I>,
+    ) -> Result<'source, Self> {
+        Ok(Self(cursor.consume(&[TokenKind::Float])?.chunk.slice))
+    }
+}

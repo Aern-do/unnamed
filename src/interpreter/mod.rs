@@ -1,11 +1,14 @@
 use crate::parser::{
-    expression::{Expression, Operator},
-    primitive::Integer,
+    expression::{Expression, Literal, Operator},
+    primitive::{Float, Integer},
 };
 
-pub fn eval(expression: Expression) -> i32 {
+pub fn eval(expression: Expression) -> f64 {
     match expression {
-        Expression::Integer(Integer(integer)) => integer.parse().unwrap(),
+        Expression::Literal(Literal::Integer(Integer(integer))) => {
+            integer.parse::<i32>().unwrap() as f64
+        }
+        Expression::Literal(Literal::Float(Float(float))) => float.parse().unwrap(),
         Expression::Infix { lhs, operator, rhs } => {
             let lhs = eval(*lhs);
             let rhs = eval(*rhs);

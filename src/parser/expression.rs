@@ -6,11 +6,15 @@ use crate::{
 
 use super::{
     cursor::Cursor,
-    primitive::{Division, Integer, LeftParenthesis, Minus, Multiply, Plus, RightParenthesis},
+    primitive::{
+        Division, Float, Integer, LeftParenthesis, Minus, Multiply, Plus, RightParenthesis,
+    },
     Parse,
 };
 
 group!(Operator: Plus, Minus, Multiply, Division);
+
+group!(Literal<'source>: Integer<'source>, Float<'source>);
 
 impl Operator {
     pub fn binding_power(&self) -> (u8, u8) {
@@ -21,11 +25,11 @@ impl Operator {
     }
 }
 
-group!(Lhs<'source>: Integer<'source>, LeftParenthesis);
+group!(Lhs<'source>: Integer<'source>, Float<'source>, LeftParenthesis);
 
 #[derive(Debug, Clone)]
 pub enum Expression<'source> {
-    Integer(Integer<'source>),
+    Literal(Literal<'source>),
     Infix { lhs: Box<Expression<'source>>, operator: Operator, rhs: Box<Expression<'source>> },
 }
 
@@ -35,7 +39,8 @@ impl<'source> Expression<'source> {
         min_bp: u8,
     ) -> Result<'source, Self> {
         let mut lhs = match cursor.parse::<Lhs>()? {
-            Lhs::Integer(integer) => Expression::Integer(integer),
+            Lhs::Integer(integer) => Expression::Literal(Literal::Integer(integer)),
+            Lhs::Float(float) => Expression::Literal(Literal::Float(float)),
             Lhs::LeftParenthesis(..) => {
                 let expression = cursor.parse::<Expression>()?;
                 cursor.parse::<RightParenthesis>()?;

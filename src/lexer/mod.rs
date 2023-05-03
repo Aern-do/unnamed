@@ -37,7 +37,7 @@ impl<'source> Lexer<'source> {
 
     pub fn lex_number(&mut self) -> Result<'source, Token<'source>> {
         let mut floating_points = 0_u8;
-        
+
         while !self.cursor.is_eof() && self.is_number_continue() {
             if self.cursor.peek() == '.' {
                 floating_points += 1;

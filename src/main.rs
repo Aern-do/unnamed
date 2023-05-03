@@ -15,12 +15,12 @@ fn main() -> Result<()> {
 
     loop {
         let readline = rl.readline("> ");
-        
+
         match readline {
             Ok(line) => {
                 let cursor = lexer::cursor::Cursor::new(&line, Path::new("repl"));
                 let lexer = Lexer::new(cursor);
-                
+
                 let tokens = match lexer.collect::<result::Result<Vec<_>, _>>() {
                     Ok(tokens) => tokens,
                     Err(err) => {
