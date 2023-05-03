@@ -78,6 +78,7 @@ pub enum TokenKind {
     Minus,
     Multiply,
     Division,
+    Comma,
     LeftParenthesis,
     RightParenthesis,
 }
@@ -92,6 +93,7 @@ impl Display for TokenKind {
             TokenKind::Division => write!(f, "division"),
             TokenKind::LeftParenthesis => write!(f, "left parenthesis"),
             TokenKind::RightParenthesis => write!(f, "right parenthesis"),
+            TokenKind::Comma => write!(f, "comma"),
         }
     }
 }

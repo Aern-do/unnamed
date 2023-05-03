@@ -71,6 +71,7 @@ impl<'source> Lexer<'source> {
             '/' => TokenKind::Division,
             '(' => TokenKind::LeftParenthesis,
             ')' => TokenKind::RightParenthesis,
+            ',' => TokenKind::Comma,
             _ => {
                 return Err(Error::new(
                     CommonErrorKind::Lexer(ErrorKind::UnexpectedToken),
