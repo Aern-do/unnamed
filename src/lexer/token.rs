@@ -73,6 +73,7 @@ impl<'source> Token<'source> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenKind {
     Integer,
+    Float,
     Plus,
     Minus,
     Multiply,
@@ -84,6 +85,7 @@ impl Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             TokenKind::Integer => write!(f, "integer"),
+            TokenKind::Float => write!(f, "float"),
             TokenKind::Plus => write!(f, "plus"),
             TokenKind::Minus => write!(f, "minus"),
             TokenKind::Multiply => write!(f, "multiply"),

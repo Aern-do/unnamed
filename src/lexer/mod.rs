@@ -22,20 +22,37 @@ impl<'source> Lexer<'source> {
         Self { cursor }
     }
 
-    pub fn is_integer(&mut self) -> bool {
+    pub fn is_number_start(&mut self) -> bool {
         self.cursor.peek().is_ascii_digit()
+    }
+
+    pub fn is_number_continue(&mut self) -> bool {
+        let char = self.cursor.peek();
+        char.is_ascii_digit() || char == '.'
     }
 
     pub fn is_whitespace(&mut self) -> bool {
         self.cursor.peek().is_whitespace()
     }
 
-    pub fn lex_integer(&mut self) -> Result<'source, Token<'source>> {
-        while !self.cursor.is_eof() && self.is_integer() {
+    pub fn lex_number(&mut self) -> Result<'source, Token<'source>> {
+        let mut floating_points = 0_u8;
+
+        while !self.cursor.is_eof() && self.is_number_continue() {
+            if self.cursor.peek() == '.' {
+                floating_points += 1;
+            }
             self.cursor.next_char();
         }
 
-        Ok(Token::new(TokenKind::Integer, self.cursor.chunk()))
+        match floating_points {
+            1 => Ok(Token::new(TokenKind::Float, self.cursor.chunk())),
+            0 => Ok(Token::new(TokenKind::Integer, self.cursor.chunk())),
+            _ => Err(Error::new(
+                CommonErrorKind::Lexer(ErrorKind::TooManyFloatingPoints(floating_points)),
+                Some(self.cursor.chunk()),
+            )),
+        }
     }
 
     pub fn skip_whitespaces(&mut self) {
@@ -66,8 +83,8 @@ impl<'source> Lexer<'source> {
     }
 
     pub fn lex(&mut self) -> Result<'source, Token<'source>> {
-        if self.is_integer() {
-            return self.lex_integer();
+        if self.is_number_start() {
+            return self.lex_number();
         }
 
         self.lex_special_symbols()
@@ -115,6 +132,7 @@ mod tests {
 
     tests!(
         test_integer("123") = Integer: "123" at 0..3;
+        test_float("1.0") = Float: "1.0" at 0..3;
         test_plus("+") = Plus: "+" at 0..1;
         test_minus("-") = Minus: "-" at 0..1;
         test_multiply("*") = Multiply: "*" at 0..1;
@@ -126,11 +144,17 @@ mod tests {
     );
 
     #[test]
-    #[should_panic]
     fn test_unexpected_token() {
         let cursor = Cursor::new("`", &Path::new("main.u"));
         let mut lexer = Lexer::new(cursor);
-        lexer.next().unwrap().unwrap();
+        assert!(lexer.next().unwrap().is_err())
+    }
+
+    #[test]
+    fn test_too_many_floating_points() {
+        let cursor = Cursor::new("1.2.3", &Path::new("main.u"));
+        let mut lexer = Lexer::new(cursor);
+        assert!(lexer.next().unwrap().is_err())
     }
 
     #[test]
