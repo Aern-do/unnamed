@@ -86,6 +86,8 @@ pub enum TokenKind {
     RightParenthesis,
     Colon,
     Semicolon,
+
+    FuncKw
 }
 
 impl Display for TokenKind {
@@ -103,7 +105,8 @@ impl Display for TokenKind {
             TokenKind::Identifier => write!(f, "identifier"),
             TokenKind::Colon => write!(f, "colon"),
             TokenKind::Semicolon => write!(f, "semicolon"),
-            
+            TokenKind::FuncKw => write!(f, "func"),
+             
         }
     }
 }
