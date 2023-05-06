@@ -7,7 +7,8 @@ use crate::{
 
 use super::{
     cursor::Cursor,
-    primitive::{Float, Integer, RightParenthesis, Identifier},
+    primitive::{Comma, Float, Identifier, Integer, RightParenthesis},
+    punctuated::{Punctuated, Stop},
     Parse,
 };
 
@@ -52,14 +53,18 @@ impl<'source> Parse<'source> for Operator {
 pub enum Literal<'source> {
     Integer(Integer<'source>),
     Float(Float<'source>),
-    Identifier(Identifier<'source>)
+    Identifier(Identifier<'source>),
 }
 
 impl<'source> Parse<'source> for Literal<'source> {
     fn parse<I: Index<usize, Output = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
     ) -> Result<'source, Self> {
-        let token = cursor.test_and_return(&[TokenKind::Integer, TokenKind::Float, TokenKind::Identifier])?;
+        let token = cursor.test_and_return(&[
+            TokenKind::Integer,
+            TokenKind::Float,
+            TokenKind::Identifier,
+        ])?;
         Ok(match token.kind {
             TokenKind::Integer => Self::Integer(cursor.parse()?),
             TokenKind::Float => Self::Float(cursor.parse()?),
@@ -69,10 +74,29 @@ impl<'source> Parse<'source> for Literal<'source> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RightParenthesisStop;
+
+impl<'source> Stop<'source> for RightParenthesisStop {
+    fn check<I: Index<usize, Output = Token<'source>>>(
+        cursor: &Cursor<'source, I>,
+    ) -> Result<'source, bool> {
+        cursor.test(&[TokenKind::RightParenthesis])
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression<'source> {
     Literal(Literal<'source>),
-    Infix { lhs: Box<Expression<'source>>, operator: Operator, rhs: Box<Expression<'source>> },
+    Call {
+        ident: Identifier<'source>,
+        arguments: Punctuated<'source, Expression<'source>, Comma, RightParenthesisStop>,
+    },
+    Infix {
+        lhs: Box<Expression<'source>>,
+        operator: Operator,
+        rhs: Box<Expression<'source>>,
+    },
 }
 
 impl<'source> Expression<'source> {
@@ -84,10 +108,19 @@ impl<'source> Expression<'source> {
             TokenKind::Integer,
             TokenKind::Float,
             TokenKind::LeftParenthesis,
-            TokenKind::Identifier
+            TokenKind::Identifier,
         ])?;
         let mut lhs = match lhs.kind {
-            TokenKind::Float | TokenKind::Integer | TokenKind::Identifier => Expression::Literal(cursor.parse()?),
+            TokenKind::Identifier => {
+                let ident = cursor.parse()?;
+                if cursor.test(&[TokenKind::LeftParenthesis])? {
+                    cursor.next_token()?;
+                    Expression::Call { ident, arguments: cursor.parse()? }
+                } else {
+                    Expression::Literal(Literal::Identifier(ident))
+                }
+            }
+            TokenKind::Float | TokenKind::Integer => Expression::Literal(cursor.parse()?),
             TokenKind::LeftParenthesis => {
                 cursor.next_token()?;
                 let expression = cursor.parse::<Expression>()?;
@@ -98,7 +131,7 @@ impl<'source> Expression<'source> {
         };
 
         loop {
-            if cursor.test(&[TokenKind::RightParenthesis])? {
+            if cursor.test(&[TokenKind::RightParenthesis, TokenKind::Comma])? {
                 break;
             }
 
@@ -133,7 +166,7 @@ impl<'source> Parse<'source> for Expression<'source> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        parser::primitive::{Float, Integer, Identifier},
+        parser::{primitive::{Float, Identifier, Integer}, punctuated::Punctuated},
         tests,
     };
 
@@ -162,12 +195,23 @@ mod tests {
             Expression::Infix { lhs: Box::new($lhs), operator: Operator::$op, rhs: Box::new($rhs) }
         };
     }
+    macro_rules! call {
+        ($ident: ident($($arg: expr),*)) => {
+            Expression::Call {
+                ident: Identifier(stringify!($ident)),
+                arguments: Punctuated::new(vec![$($arg),*])
+            }
+        };
+    }
 
     tests! {
         test_integer("10"): int!(10);
         test_float("1.0"): float!(1.0);
         test_identifier("pi"): ident!(pi);
         test_infix("2 + pi"): infix!(int!(2), Plus, ident!(pi));
+        test_call_no_args("test()"): call!(test());
+        test_call_one_arg("test(1)"): call!(test(int!(1)));
+        test_call_many_args("test(1, 2.0)"): call!(test(int!(1), float!(2.0)));
         test_parenthesis("(2 + 2) * 2"): infix!(infix!(int!(2), Plus, int!(2)), Multiply, int!(2));
     }
 }
