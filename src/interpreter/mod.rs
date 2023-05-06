@@ -27,8 +27,8 @@ pub fn eval(expression: Expression) -> f64 {
             }
         }
         Expression::Call { ident, arguments } => {
-            match ident.0 {
-                "cos" => {
+                match ident.0 {
+                    "cos" => {
                     let argument = eval(arguments.elements.into_iter().next().unwrap());
                     argument.cos()
                 },
