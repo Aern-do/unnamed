@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use crate::{
     common::error::Result,
     lexer::token::{Token, TokenKind},
@@ -11,7 +13,7 @@ macro_rules! implement_primitive {
             #[derive(Debug, Clone)]
             pub struct $kind;
             impl<'source> Parse<'source> for $kind {
-                fn parse<I: Iterator<Item = Token<'source>>>(
+                fn parse<I: Index<usize, Output = Token<'source>>>(
                     cursor: &mut Cursor<'source, I>,
                 ) -> Result<'source, Self> {
                     cursor.consume(&[TokenKind::$kind])?;
@@ -27,7 +29,7 @@ macro_rules! implement_primitive {
     };
 }
 
-implement_primitive!(Plus, Minus, Multiply, Division, LeftParenthesis, RightParenthesis);
+implement_primitive!(Plus, Minus, Multiply, Division, LeftParenthesis, RightParenthesis, Comma);
 
 #[derive(Debug, Clone)]
 pub struct Integer<'source>(pub &'source str);
@@ -39,7 +41,7 @@ impl<'source> Integer<'source> {
 }
 
 impl<'source> Parse<'source> for Integer<'source> {
-    fn parse<I: Iterator<Item = Token<'source>>>(
+    fn parse<I: Index<usize, Output = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
     ) -> Result<'source, Self> {
         Ok(Self(cursor.consume(&[TokenKind::Integer])?.chunk.slice))
@@ -56,7 +58,7 @@ impl<'source> Float<'source> {
 }
 
 impl<'source> Parse<'source> for Float<'source> {
-    fn parse<I: Iterator<Item = Token<'source>>>(
+    fn parse<I: Index<usize, Output = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
     ) -> Result<'source, Self> {
         Ok(Self(cursor.consume(&[TokenKind::Float])?.chunk.slice))

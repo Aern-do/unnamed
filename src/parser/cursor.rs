@@ -1,4 +1,4 @@
-use std::iter::Peekable;
+use std::ops::Index;
 
 use crate::{
     common::{
@@ -12,26 +12,39 @@ use crate::{
 use super::Parse;
 
 #[derive(Debug, Clone)]
-pub struct Cursor<'source, I: Iterator<Item = Token<'source>>> {
-    tokens: Peekable<I>,
+pub struct Cursor<'source, I: Index<usize, Output = Token<'source>>> {
+    tokens: I,
+    len: usize,
+    position: usize,
 }
 
-impl<'source, I: Iterator<Item = Token<'source>>> Cursor<'source, I> {
-    pub fn new(iter: I) -> Self {
-        Self { tokens: iter.peekable() }
+impl<'source, I: Index<usize, Output = Token<'source>>> Cursor<'source, I> {
+    pub fn new(len: usize, tokens: I) -> Self {
+        Self { tokens, position: Default::default(), len }
+    }
+
+    pub fn move_cursor(&mut self, position: usize) {
+        self.position = position;
+    }
+
+    pub fn increment_cursor(&mut self) {
+        self.position += 1;
     }
 
     pub fn next_token(&mut self) -> Result<'source, Token<'source>> {
-        self.tokens
-            .next()
-            .ok_or_else(|| Error::new(CommonErrorKind::Parser(ErrorKind::UnexpectedEof), None))
+        if self.position >= self.len {
+            return Err(Error::new(CommonErrorKind::Parser(ErrorKind::UnexpectedEof), None));
+        }
+        let token = self.tokens[self.position];
+        self.increment_cursor();
+        Ok(token)
     }
 
     pub fn peek(&mut self) -> Result<'source, Token<'source>> {
-        self.tokens
-            .peek()
-            .copied()
-            .ok_or_else(|| Error::new(CommonErrorKind::Parser(ErrorKind::UnexpectedEof), None))
+        if self.position >= self.len {
+            return Err(Error::new(CommonErrorKind::Parser(ErrorKind::UnexpectedEof), None));
+        }
+        Ok(self.tokens[self.position])
     }
 
     pub fn test(&mut self, expected: &'static [TokenKind]) -> Result<'source, bool> {
@@ -60,7 +73,10 @@ impl<'source, I: Iterator<Item = Token<'source>>> Cursor<'source, I> {
         }
     }
 
-    pub fn test_and_return(&mut self, expected: &'static [TokenKind]) -> Result<'source, Token<'source>> {
+    pub fn test_and_return(
+        &mut self,
+        expected: &'static [TokenKind],
+    ) -> Result<'source, Token<'source>> {
         if self.test(expected)? {
             self.peek()
         } else {
@@ -76,24 +92,21 @@ impl<'source, I: Iterator<Item = Token<'source>>> Cursor<'source, I> {
         }
     }
 
-    pub fn parse<P: Parse<'source>>(&mut self) -> Result<'source, P>
-    where
-        I: Clone,
-    {
+    pub fn parse<P: Parse<'source>>(&mut self) -> Result<'source, P> {
         P::parse(self)
     }
 
-    pub fn parse_without_consume<P: Parse<'source>>(&mut self) -> Result<'source, P>
-    where
-        I: Clone,
-    {
-        P::parse(&mut self.clone())
+    pub fn parse_without_consume<P: Parse<'source>>(&mut self) -> Result<'source, P> {
+        let previous_position = self.position;
+        let parsed = P::parse(self)?;
+        self.move_cursor(previous_position);
+        Ok(parsed)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
+    use std::{ops::Index, path::Path};
 
     use crate::{
         lexer::token::{Chunk, Position, Token, TokenKind},
@@ -107,8 +120,8 @@ mod tests {
         }
     }
 
-    fn create_cursor(tokens: Vec<Token>) -> Cursor<impl Iterator<Item = Token>> {
-        Cursor::new(tokens.into_iter())
+    fn create_cursor(tokens: Vec<Token>) -> Cursor<impl Index<usize, Output = Token>> {
+        Cursor::new(tokens.len(), tokens)
     }
 
     #[test]

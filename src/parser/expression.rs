@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use crate::{
     common::error::Result,
     lexer::token::{Token, TokenKind},
@@ -5,9 +7,7 @@ use crate::{
 
 use super::{
     cursor::Cursor,
-    primitive::{
-        Float, Integer, RightParenthesis,
-    },
+    primitive::{Float, Integer, RightParenthesis},
     Parse,
 };
 
@@ -16,7 +16,7 @@ pub enum Operator {
     Plus,
     Minus,
     Multiply,
-    Division
+    Division,
 }
 
 impl Operator {
@@ -28,18 +28,22 @@ impl Operator {
     }
 }
 
-
 impl<'source> Parse<'source> for Operator {
-    fn parse<I: Iterator<Item = Token<'source>> + Clone>(
+    fn parse<I: Index<usize, Output = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
     ) -> Result<'source, Self> {
-        let token = cursor.consume(&[TokenKind::Plus, TokenKind::Minus, TokenKind::Multiply, TokenKind::Division])?;
+        let token = cursor.consume(&[
+            TokenKind::Plus,
+            TokenKind::Minus,
+            TokenKind::Multiply,
+            TokenKind::Division,
+        ])?;
         Ok(match token.kind {
             TokenKind::Plus => Operator::Plus,
             TokenKind::Minus => Operator::Minus,
             TokenKind::Multiply => Operator::Multiply,
             TokenKind::Division => Operator::Division,
-            _ => unreachable!()
+            _ => unreachable!(),
         })
     }
 }
@@ -51,7 +55,7 @@ pub enum Literal<'source> {
 }
 
 impl<'source> Parse<'source> for Literal<'source> {
-    fn parse<I: Iterator<Item = Token<'source>> + Clone>(
+    fn parse<I: Index<usize, Output = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
     ) -> Result<'source, Self> {
         let token = cursor.test_and_return(&[TokenKind::Integer, TokenKind::Float])?;
@@ -70,19 +74,23 @@ pub enum Expression<'source> {
 }
 
 impl<'source> Expression<'source> {
-    fn parse_bp<I: Iterator<Item = Token<'source>> + Clone>(
+    fn parse_bp<I: Index<usize, Output = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
         min_bp: u8,
     ) -> Result<'source, Self> {
-        let lhs = cursor.test_and_return(&[TokenKind::Integer, TokenKind::Float, TokenKind::LeftParenthesis])?;
+        let lhs = cursor.test_and_return(&[
+            TokenKind::Integer,
+            TokenKind::Float,
+            TokenKind::LeftParenthesis,
+        ])?;
         let mut lhs = match lhs.kind {
             TokenKind::Float | TokenKind::Integer => Expression::Literal(cursor.parse()?),
             TokenKind::LeftParenthesis => {
                 let expression = cursor.parse::<Expression>()?;
                 cursor.parse::<RightParenthesis>()?;
                 expression
-            },
-            _ => unreachable!()
+            }
+            _ => unreachable!(),
         };
 
         loop {
@@ -111,7 +119,7 @@ impl<'source> Expression<'source> {
 }
 
 impl<'source> Parse<'source> for Expression<'source> {
-    fn parse<I: Iterator<Item = Token<'source>> + Clone>(
+    fn parse<I: Index<usize, Output = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
     ) -> Result<'source, Self> {
         Self::parse_bp(cursor, 0)
