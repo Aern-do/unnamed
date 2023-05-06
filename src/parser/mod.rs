@@ -1,9 +1,6 @@
-use std::{fmt::Debug, ops::Index, path::Path, result};
+use std::ops::Index;
 
-use crate::{
-    common::error::Result,
-    lexer::{self, token::Token, Lexer},
-};
+use crate::{common::error::Result, lexer::token::Token};
 
 use self::cursor::Cursor;
 
@@ -19,10 +16,26 @@ pub trait Parse<'source>: Sized {
     ) -> Result<'source, Self>;
 }
 
-pub fn test<P: Parse<'static> + Debug + PartialEq>(input: &'static str, expected: P) {
-    let cursor = lexer::cursor::Cursor::new(input, Path::new("test.u"));
-    let lexer = Lexer::new(cursor);
-    let tokens = lexer.collect::<result::Result<Vec<_>, _>>().unwrap();
-    let mut cursor: Cursor<Vec<Token>> = Cursor::new(tokens.len(), tokens);
-    assert_eq!(cursor.parse::<P>().unwrap(), expected);
+#[macro_export]
+macro_rules! tests {
+    ($($name: ident$(<$generic: ty>)?($input: literal): $expected: expr);+ $(;)?) => {
+        use $crate::{lexer::{self, *}, parser::*};
+        use std::{path::Path, result, fmt::Debug};
+
+        fn compare<P: Parse<'static> + Debug + PartialEq>(recivied: P, expected: P) {
+            assert_eq!(recivied, expected)
+        }
+        $(
+            #[test]
+            fn $name() {
+                let cursor = lexer::cursor::Cursor::new($input, Path::new("test.u"));
+                let lexer = Lexer::new(cursor);
+                let tokens = lexer.collect::<result::Result<Vec<_>, _>>().unwrap();
+                let mut cursor: Cursor<Vec<Token>> = Cursor::new(tokens.len(), tokens);
+                let parsed = cursor.parse$(::<$generic>)?().unwrap();
+                compare(parsed, $expected) // idk
+            }
+        )+
+
+    };
 }

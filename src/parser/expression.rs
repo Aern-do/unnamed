@@ -11,7 +11,7 @@ use super::{
     Parse,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Operator {
     Plus,
     Minus,
@@ -48,7 +48,7 @@ impl<'source> Parse<'source> for Operator {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Literal<'source> {
     Integer(Integer<'source>),
     Float(Float<'source>),
@@ -67,7 +67,7 @@ impl<'source> Parse<'source> for Literal<'source> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expression<'source> {
     Literal(Literal<'source>),
     Infix { lhs: Box<Expression<'source>>, operator: Operator, rhs: Box<Expression<'source>> },
@@ -86,6 +86,7 @@ impl<'source> Expression<'source> {
         let mut lhs = match lhs.kind {
             TokenKind::Float | TokenKind::Integer => Expression::Literal(cursor.parse()?),
             TokenKind::LeftParenthesis => {
+                cursor.next_token()?;
                 let expression = cursor.parse::<Expression>()?;
                 cursor.parse::<RightParenthesis>()?;
                 expression
@@ -123,5 +124,39 @@ impl<'source> Parse<'source> for Expression<'source> {
         cursor: &mut Cursor<'source, I>,
     ) -> Result<'source, Self> {
         Self::parse_bp(cursor, 0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        parser::primitive::{Float, Integer},
+        tests,
+    };
+
+    use super::{Expression, Literal, Operator};
+
+    macro_rules! int {
+        ($lit: literal) => {
+            Expression::Literal(Literal::Integer(Integer(stringify!($lit))))
+        };
+    }
+    macro_rules! float {
+        ($lit: literal) => {
+            Expression::Literal(Literal::Float(Float(stringify!($lit))))
+        };
+    }
+
+    macro_rules! infix {
+        ($lhs: expr, $op: ident, $rhs: expr) => {
+            Expression::Infix { lhs: Box::new($lhs), operator: Operator::$op, rhs: Box::new($rhs) }
+        };
+    }
+
+    tests! {
+        test_integer("10"): int!(10);
+        test_float("1.0"): float!(1.0);
+        test_infix("2 + 2"): infix!(int!(2), Plus, int!(2));
+        test_parenthesis("(2 + 2) * 2"): infix!(infix!(int!(2), Plus, int!(2)), Multiply, int!(2));
     }
 }

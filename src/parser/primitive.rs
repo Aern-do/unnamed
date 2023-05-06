@@ -64,3 +64,24 @@ impl<'source> Parse<'source> for Float<'source> {
         Ok(Self(cursor.consume(&[TokenKind::Float])?.chunk.slice))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::tests;
+
+    use super::{
+        Comma, Division, Float, Integer, LeftParenthesis, Minus, Multiply, Plus, RightParenthesis,
+    };
+
+    tests! {
+        test_plus("+"): Plus;
+        test_minus("-"): Minus;
+        test_multiply("*"): Multiply;
+        test_division("/"): Division;
+        test_left_parenthesis("("): LeftParenthesis;
+        test_right_parenthesis(")"): RightParenthesis;
+        test_comma(","): Comma;
+        test_integer("3"): Integer("3");
+        test_float("3.14"): Float("3.14")
+    }
+}

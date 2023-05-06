@@ -40,9 +40,9 @@ pub struct Punctuated<
     P: Stop<'source> = EmptyStop,
 > {
     pub elements: Vec<T>,
-    __separator: PhantomData<S>,
-    __stop: PhantomData<P>,
-    __lifetime: PhantomData<&'source ()>,
+    _separator: PhantomData<S>,
+    _stop: PhantomData<P>,
+    _lifetime: PhantomData<&'source ()>,
 }
 
 impl<'source, T: Parse<'source>, S: Separator<'source>, P: Stop<'source>>
@@ -51,9 +51,9 @@ impl<'source, T: Parse<'source>, S: Separator<'source>, P: Stop<'source>>
     pub fn new(elements: Vec<T>) -> Self {
         Self {
             elements,
-            __separator: PhantomData,
-            __lifetime: PhantomData,
-            __stop: Default::default(),
+            _separator: PhantomData,
+            _lifetime: PhantomData,
+            _stop: Default::default(),
         }
     }
 }
@@ -105,43 +105,27 @@ mod tests {
             cursor::Cursor,
             primitive::{Comma, Integer},
             punctuated::Stop,
-            test,
         },
+        tests,
     };
 
     use super::Punctuated;
 
-    #[test]
-    fn test_no_elements() {
-        test::<Punctuated<Integer, Comma>>("", Punctuated::new(vec![]))
-    }
+    #[derive(Debug, Clone, PartialEq)]
+    struct RightParenthesisStop;
 
-    #[test]
-    fn test_one_element() {
-        test::<Punctuated<Integer, Comma>>("1", Punctuated::new(vec![Integer("1")]))
-    }
-
-    #[test]
-    fn test_many_elements() {
-        test::<Punctuated<Integer, Comma>>(
-            "1, 2, 3",
-            Punctuated::new(vec![Integer("1"), Integer("2"), Integer("3")]),
-        )
-    }
-
-    #[test]
-    fn test_custom_stop() {
-        #[derive(Debug, Clone, PartialEq)]
-        struct RightParenthesisStop;
-
-        impl<'source> Stop<'source> for RightParenthesisStop {
-            fn check<I: Index<usize, Output = Token<'source>>>(
-                cursor: &Cursor<'source, I>,
-            ) -> Result<'source, bool> {
-                cursor.test(&[TokenKind::RightParenthesis])
-            }
+    impl<'source> Stop<'source> for RightParenthesisStop {
+        fn check<I: Index<usize, Output = Token<'source>>>(
+            cursor: &Cursor<'source, I>,
+        ) -> Result<'source, bool> {
+            cursor.test(&[TokenKind::RightParenthesis])
         }
+    }
 
-        test::<Punctuated<Integer, Comma, RightParenthesisStop>>(")", Punctuated::new(vec![]))
+    tests! {
+        test_no_elements<Punctuated<Integer, Comma>>(""): Punctuated::new(vec![]);
+        test_one_element<Punctuated<Integer, Comma>>("1"): Punctuated::new(vec![Integer("1")]);
+        test_many_elements<Punctuated<Integer, Comma>>("1, 2, 3"): Punctuated::new(vec![Integer("1"), Integer("2"), Integer("3")]);
+        test_custom_stop<Punctuated<Integer, Comma, RightParenthesisStop>>(")"): Punctuated::new(vec![]);
     }
 }
