@@ -10,7 +10,7 @@ use super::{cursor::Cursor, Parse};
 macro_rules! implement_primitive {
     ($($kind: ident),*) => {
         $(
-            #[derive(Debug, Clone)]
+            #[derive(Debug, Clone, PartialEq)]
             pub struct $kind;
             impl<'source> Parse<'source> for $kind {
                 fn parse<I: Index<usize, Output = Token<'source>>>(
@@ -31,7 +31,7 @@ macro_rules! implement_primitive {
 
 implement_primitive!(Plus, Minus, Multiply, Division, LeftParenthesis, RightParenthesis, Comma);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Integer<'source>(pub &'source str);
 
 impl<'source> Integer<'source> {
@@ -48,7 +48,7 @@ impl<'source> Parse<'source> for Integer<'source> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Float<'source>(pub &'source str);
 
 impl<'source> Float<'source> {

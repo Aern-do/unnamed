@@ -31,6 +31,10 @@ impl<'source, I: Index<usize, Output = Token<'source>>> Cursor<'source, I> {
         self.position += 1;
     }
 
+    pub fn is_eof(&self) -> bool {
+        self.position >= self.len
+    }
+
     pub fn next_token(&mut self) -> Result<'source, Token<'source>> {
         if self.position >= self.len {
             return Err(Error::new(CommonErrorKind::Parser(ErrorKind::UnexpectedEof), None));
@@ -40,14 +44,14 @@ impl<'source, I: Index<usize, Output = Token<'source>>> Cursor<'source, I> {
         Ok(token)
     }
 
-    pub fn peek(&mut self) -> Result<'source, Token<'source>> {
+    pub fn peek(&self) -> Result<'source, Token<'source>> {
         if self.position >= self.len {
             return Err(Error::new(CommonErrorKind::Parser(ErrorKind::UnexpectedEof), None));
         }
         Ok(self.tokens[self.position])
     }
 
-    pub fn test(&mut self, expected: &'static [TokenKind]) -> Result<'source, bool> {
+    pub fn test(&self, expected: &'static [TokenKind]) -> Result<'source, bool> {
         match self.peek() {
             Ok(token) if expected.contains(&token.kind) => Ok(true),
             Ok(..) => Ok(false),
@@ -132,13 +136,13 @@ mod tests {
 
     #[test]
     fn test_peek() {
-        let mut cursor = create_cursor(vec![create_token(TokenKind::Plus)]);
+        let cursor = create_cursor(vec![create_token(TokenKind::Plus)]);
         assert_eq!(cursor.peek().unwrap().kind, TokenKind::Plus);
     }
 
     #[test]
-    fn test_test() {
-        let mut cursor = create_cursor(vec![create_token(TokenKind::Plus)]);
+    fn test_cursor_test() {
+        let cursor = create_cursor(vec![create_token(TokenKind::Plus)]);
         assert_eq!(cursor.test(&[TokenKind::Plus]).unwrap(), true);
         assert_eq!(cursor.test(&[TokenKind::Integer]).unwrap(), false);
     }
