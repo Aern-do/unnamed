@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 use crate::parser::{
     expression::{Expression, Literal, Operator},
     primitive::{Float, Identifier, Integer},
@@ -10,7 +12,7 @@ pub fn eval(expression: Expression) -> f64 {
         }
         Expression::Literal(Literal::Float(Float(float))) => float.parse().unwrap(),
         Expression::Literal(Literal::Identifier(Identifier(ident))) => match ident {
-            "pi" => 3.14,
+            "pi" => PI,
             _ => panic!("Unknown variable"),
         },
 
