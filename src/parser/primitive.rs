@@ -29,49 +29,33 @@ macro_rules! implement_primitive {
     };
 }
 
+macro_rules! implement_primitive_inner {
+    ($($kind: ident<$lt: lifetime>),*) => {
+        $(
+            #[derive(Debug, Clone, PartialEq)]
+            pub struct $kind<$lt>(pub &$lt str);
+
+            impl<$lt> Parse<$lt> for $kind<$lt> {
+                fn parse<I: Index<usize, Output = Token<$lt>>>(
+                    cursor: &mut Cursor<$lt, I>,
+                ) -> Result<$lt, Self> {
+                    let token = cursor.consume(&[TokenKind::$kind])?;
+                    Ok($kind(token.chunk.slice))
+                }
+            }
+        )*
+    };
+}
+
+
 implement_primitive!(Plus, Minus, Multiply, Division, LeftParenthesis, RightParenthesis, Comma);
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Integer<'source>(pub &'source str);
-
-impl<'source> Integer<'source> {
-    pub fn from_slice(slice: &'source str) -> Self {
-        Self(slice)
-    }
-}
-
-impl<'source> Parse<'source> for Integer<'source> {
-    fn parse<I: Index<usize, Output = Token<'source>>>(
-        cursor: &mut Cursor<'source, I>,
-    ) -> Result<'source, Self> {
-        Ok(Self(cursor.consume(&[TokenKind::Integer])?.chunk.slice))
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Float<'source>(pub &'source str);
-
-impl<'source> Float<'source> {
-    pub fn from_slice(slice: &'source str) -> Self {
-        Self(slice)
-    }
-}
-
-impl<'source> Parse<'source> for Float<'source> {
-    fn parse<I: Index<usize, Output = Token<'source>>>(
-        cursor: &mut Cursor<'source, I>,
-    ) -> Result<'source, Self> {
-        Ok(Self(cursor.consume(&[TokenKind::Float])?.chunk.slice))
-    }
-}
+implement_primitive_inner!(Integer<'source>, Float<'source>, Identifier<'source>);
 
 #[cfg(test)]
 mod tests {
-    use crate::tests;
+    use crate::{tests};
 
-    use super::{
-        Comma, Division, Float, Integer, LeftParenthesis, Minus, Multiply, Plus, RightParenthesis,
-    };
+    use super::{Plus, Minus, Multiply, Division, Integer, Float, Comma, LeftParenthesis, RightParenthesis, Identifier};
 
     tests! {
         test_plus("+"): Plus;
@@ -82,6 +66,7 @@ mod tests {
         test_right_parenthesis(")"): RightParenthesis;
         test_comma(","): Comma;
         test_integer("3"): Integer("3");
-        test_float("3.14"): Float("3.14")
+        test_float("3.14"): Float("3.14");
+        test_identifier("test"): Identifier("test")
     }
 }

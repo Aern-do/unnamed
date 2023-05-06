@@ -1,6 +1,6 @@
 use crate::parser::{
     expression::{Expression, Literal, Operator},
-    primitive::{Float, Integer},
+    primitive::{Float, Identifier, Integer},
 };
 
 pub fn eval(expression: Expression) -> f64 {
@@ -9,6 +9,11 @@ pub fn eval(expression: Expression) -> f64 {
             integer.parse::<i32>().unwrap() as f64
         }
         Expression::Literal(Literal::Float(Float(float))) => float.parse().unwrap(),
+        Expression::Literal(Literal::Identifier(Identifier(ident))) => match ident {
+            "pi" => 3.14,
+            _ => panic!("Unknown variable"),
+        },
+
         Expression::Infix { lhs, operator, rhs } => {
             let lhs = eval(*lhs);
             let rhs = eval(*rhs);

@@ -7,7 +7,7 @@ use crate::{
 
 use super::{
     cursor::Cursor,
-    primitive::{Float, Integer, RightParenthesis},
+    primitive::{Float, Integer, RightParenthesis, Identifier},
     Parse,
 };
 
@@ -52,16 +52,18 @@ impl<'source> Parse<'source> for Operator {
 pub enum Literal<'source> {
     Integer(Integer<'source>),
     Float(Float<'source>),
+    Identifier(Identifier<'source>)
 }
 
 impl<'source> Parse<'source> for Literal<'source> {
     fn parse<I: Index<usize, Output = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
     ) -> Result<'source, Self> {
-        let token = cursor.test_and_return(&[TokenKind::Integer, TokenKind::Float])?;
+        let token = cursor.test_and_return(&[TokenKind::Integer, TokenKind::Float, TokenKind::Identifier])?;
         Ok(match token.kind {
             TokenKind::Integer => Self::Integer(cursor.parse()?),
             TokenKind::Float => Self::Float(cursor.parse()?),
+            TokenKind::Identifier => Self::Identifier(cursor.parse()?),
             _ => unreachable!(),
         })
     }
@@ -82,9 +84,10 @@ impl<'source> Expression<'source> {
             TokenKind::Integer,
             TokenKind::Float,
             TokenKind::LeftParenthesis,
+            TokenKind::Identifier
         ])?;
         let mut lhs = match lhs.kind {
-            TokenKind::Float | TokenKind::Integer => Expression::Literal(cursor.parse()?),
+            TokenKind::Float | TokenKind::Integer | TokenKind::Identifier => Expression::Literal(cursor.parse()?),
             TokenKind::LeftParenthesis => {
                 cursor.next_token()?;
                 let expression = cursor.parse::<Expression>()?;
@@ -130,7 +133,7 @@ impl<'source> Parse<'source> for Expression<'source> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        parser::primitive::{Float, Integer},
+        parser::primitive::{Float, Integer, Identifier},
         tests,
     };
 
@@ -141,9 +144,16 @@ mod tests {
             Expression::Literal(Literal::Integer(Integer(stringify!($lit))))
         };
     }
+
     macro_rules! float {
         ($lit: literal) => {
             Expression::Literal(Literal::Float(Float(stringify!($lit))))
+        };
+    }
+
+    macro_rules! ident {
+        ($lit: ident) => {
+            Expression::Literal(Literal::Identifier(Identifier(stringify!($lit))))
         };
     }
 
@@ -156,7 +166,8 @@ mod tests {
     tests! {
         test_integer("10"): int!(10);
         test_float("1.0"): float!(1.0);
-        test_infix("2 + 2"): infix!(int!(2), Plus, int!(2));
+        test_identifier("pi"): ident!(pi);
+        test_infix("2 + pi"): infix!(int!(2), Plus, ident!(pi));
         test_parenthesis("(2 + 2) * 2"): infix!(infix!(int!(2), Plus, int!(2)), Multiply, int!(2));
     }
 }
