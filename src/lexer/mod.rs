@@ -1,3 +1,5 @@
+use unicode_ident::{is_xid_continue, is_xid_start};
+
 use crate::common::{
     error::{Error, Result},
     CommonErrorKind,
@@ -29,6 +31,14 @@ impl<'source> Lexer<'source> {
     pub fn is_number_continue(&mut self) -> bool {
         let char = self.cursor.peek();
         char.is_ascii_digit() || char == '.'
+    }
+
+    pub fn is_identifier_start(&mut self) -> bool {
+        is_xid_start(self.cursor.peek())
+    }
+
+    pub fn is_identifier_continue(&mut self) -> bool {
+        is_xid_continue(self.cursor.peek())
     }
 
     pub fn is_whitespace(&mut self) -> bool {
@@ -63,6 +73,14 @@ impl<'source> Lexer<'source> {
         self.cursor.reset();
     }
 
+    pub fn lex_identifier(&mut self) -> Result<'source, Token<'source>> {
+        self.cursor.next_char();
+        while !self.cursor.is_eof() && self.is_identifier_continue() {
+            self.cursor.next_char();
+        }
+        Ok(Token::new(TokenKind::Identifier, self.cursor.chunk()))
+    }
+
     pub fn lex_special_symbols(&mut self) -> Result<'source, Token<'source>> {
         let kind = match self.cursor.next_char() {
             '+' => TokenKind::Plus,
@@ -86,6 +104,9 @@ impl<'source> Lexer<'source> {
     pub fn lex(&mut self) -> Result<'source, Token<'source>> {
         if self.is_number_start() {
             return self.lex_number();
+        }
+        if self.is_identifier_start() {
+            return self.lex_identifier();
         }
 
         self.lex_special_symbols()
@@ -134,6 +155,8 @@ mod tests {
     tests!(
         test_integer("123") = Integer: "123" at 0..3;
         test_float("1.0") = Float: "1.0" at 0..3;
+        test_identifier("test") = Identifier: "test" at 0..4;
+        test_unicode_identifier("проверка") = Identifier: "проверка" at 0..16;
         test_plus("+") = Plus: "+" at 0..1;
         test_minus("-") = Minus: "-" at 0..1;
         test_multiply("*") = Multiply: "*" at 0..1;

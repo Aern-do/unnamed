@@ -81,6 +81,7 @@ pub enum TokenKind {
     Comma,
     LeftParenthesis,
     RightParenthesis,
+    Identifier,
 }
 impl Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -94,6 +95,7 @@ impl Display for TokenKind {
             TokenKind::LeftParenthesis => write!(f, "left parenthesis"),
             TokenKind::RightParenthesis => write!(f, "right parenthesis"),
             TokenKind::Comma => write!(f, "comma"),
+            TokenKind::Identifier => write!(f, "identifier"),
         }
     }
 }
