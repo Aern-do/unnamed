@@ -20,8 +20,8 @@ fn expand_data_struct(name: Ident, Generics { params, .. }: Generics, data_struc
     } else { None };
 
     quote! {
-        impl<'source> Parse<'source> for #name<#lt> {
-            fn parse<I: Index<usize, Output = Token<'source>>>(cursor: &mut Cursor<'source, I>) -> Result<'source, Self> {
+        impl<'source> crate::parser::Parse<'source> for #name<#lt> {
+            fn parse<I: std::ops::Index<usize, Output = crate::lexer::token::Token<'source>>>(cursor: &mut crate::parser::cursor::Cursor<'source, I>) -> crate::common::error::Result<'source, Self> {
                 Ok(
                     Self {
                         #(#fields),*
