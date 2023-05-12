@@ -2,7 +2,7 @@ use std::ops::Index;
 
 use crate::{common::error::Result, lexer::token::Token};
 
-use self::{cursor::Cursor, expression::Expression, primitive::Semicolon, punctuated::Punctuated};
+use self::cursor::Cursor;
 
 pub mod cursor;
 pub mod delimited;
@@ -21,8 +21,6 @@ pub trait Parse<'source>: Sized {
         cursor: &mut Cursor<'source, I>,
     ) -> Result<'source, Self>;
 }
-
-pub type Block<'source> = Punctuated<'source, Expression<'source>, Semicolon>;
 
 #[macro_export]
 macro_rules! tests {

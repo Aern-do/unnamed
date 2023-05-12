@@ -32,6 +32,7 @@ mod tests {
         parser::{
             delimited::{Braced, Parenthesized},
             primitive::{Colon, FuncKw, Identifier},
+            punctuated::Punctuated,
         },
         tests,
     };
