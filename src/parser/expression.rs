@@ -8,11 +8,11 @@ use crate::{
 use super::{
     cursor::Cursor,
     primitive::{Comma, Float, Identifier, Integer, RightParenthesis},
-    punctuated::{Punctuated, Stop},
+    punctuated::Punctuated,
     Parse,
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Operator {
     Plus,
     Minus,
@@ -49,7 +49,7 @@ impl<'source> Parse<'source> for Operator {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Literal<'source> {
     Integer(Integer<'source>),
     Float(Float<'source>),
@@ -65,6 +65,7 @@ impl<'source> Parse<'source> for Literal<'source> {
             TokenKind::Float,
             TokenKind::Identifier,
         ])?;
+
         Ok(match token.kind {
             TokenKind::Integer => Self::Integer(cursor.parse()?),
             TokenKind::Float => Self::Float(cursor.parse()?),
@@ -74,23 +75,12 @@ impl<'source> Parse<'source> for Literal<'source> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct RightParenthesisStop;
-
-impl<'source> Stop<'source> for RightParenthesisStop {
-    fn check<I: Index<usize, Output = Token<'source>>>(
-        cursor: &Cursor<'source, I>,
-    ) -> Result<'source, bool> {
-        cursor.test(&[TokenKind::RightParenthesis])
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expression<'source> {
     Literal(Literal<'source>),
     Call {
         ident: Identifier<'source>,
-        arguments: Punctuated<'source, Expression<'source>, Comma, RightParenthesisStop>,
+        arguments: Punctuated<'source, Expression<'source>, Comma, RightParenthesis>,
     },
     Infix {
         lhs: Box<Expression<'source>>,
@@ -113,12 +103,17 @@ impl<'source> Expression<'source> {
         let mut lhs = match lhs.kind {
             TokenKind::Identifier => {
                 let ident = cursor.parse()?;
-                if cursor.test(&[TokenKind::LeftParenthesis])? {
+
+                let expr = if cursor.test(&[TokenKind::LeftParenthesis])? {
                     cursor.next_token()?;
-                    Expression::Call { ident, arguments: cursor.parse()? }
+                    let call = Expression::Call { ident, arguments: cursor.parse()? };
+                    cursor.parse::<RightParenthesis>()?;
+                    call
                 } else {
                     Expression::Literal(Literal::Identifier(ident))
-                }
+                };
+                
+                expr
             }
             TokenKind::Float | TokenKind::Integer => Expression::Literal(cursor.parse()?),
             TokenKind::LeftParenthesis => {
@@ -131,7 +126,12 @@ impl<'source> Expression<'source> {
         };
 
         loop {
-            if cursor.test(&[TokenKind::RightParenthesis, TokenKind::Comma])? {
+            if cursor.test(&[
+                TokenKind::RightParenthesis,
+                TokenKind::RightBraces,
+                TokenKind::Comma,
+                TokenKind::Semicolon,
+            ])? {
                 break;
             }
 
@@ -166,7 +166,10 @@ impl<'source> Parse<'source> for Expression<'source> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        parser::{primitive::{Float, Identifier, Integer}, punctuated::Punctuated},
+        parser::{
+            primitive::{Float, Identifier, Integer},
+            punctuated::Punctuated,
+        },
         tests,
     };
 
