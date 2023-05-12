@@ -89,7 +89,7 @@ pub enum TokenKind {
     Colon,
     Semicolon,
 
-    FuncKw
+    FuncKw,
 }
 
 impl Display for TokenKind {
@@ -110,7 +110,6 @@ impl Display for TokenKind {
             TokenKind::FuncKw => write!(f, "func"),
             TokenKind::LeftBraces => write!(f, "left braces"),
             TokenKind::RightBraces => write!(f, "right braces"),
-             
         }
     }
 }
