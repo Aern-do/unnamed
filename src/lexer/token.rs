@@ -92,6 +92,7 @@ pub enum TokenKind {
     FuncKw,
     IfKw,
     ElseKw,
+    WhileKw,
 }
 
 impl Display for TokenKind {
@@ -114,6 +115,7 @@ impl Display for TokenKind {
             TokenKind::RightBrace => write!(f, "right brace"),
             TokenKind::IfKw => write!(f, "if"),
             TokenKind::ElseKw => write!(f, "else"),
+            TokenKind::WhileKw => write!(f, "while"),
         }
     }
 }
