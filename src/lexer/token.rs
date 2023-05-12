@@ -90,6 +90,8 @@ pub enum TokenKind {
     Semicolon,
 
     FuncKw,
+    IfKw,
+    ElseKw
 }
 
 impl Display for TokenKind {
@@ -110,6 +112,8 @@ impl Display for TokenKind {
             TokenKind::FuncKw => write!(f, "func"),
             TokenKind::LeftBrace => write!(f, "left brace"),
             TokenKind::RightBrace => write!(f, "right brace"),
+            TokenKind::IfKw => write!(f, "if"),
+            TokenKind::ElseKw => write!(f, "else"),
         }
     }
 }
