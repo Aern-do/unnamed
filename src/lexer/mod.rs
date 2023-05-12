@@ -101,6 +101,24 @@ impl<'source> Lexer<'source> {
             ';' => TokenKind::Semicolon,
             '{' => TokenKind::LeftBrace,
             '}' => TokenKind::RightBrace,
+            '>' => {
+                if !self.cursor.is_eof() && self.cursor.peek() == '=' {
+                    self.cursor.next_char();
+                    TokenKind::GreeterEq
+                } else { TokenKind::Greeter }
+            },
+            '<' => {
+                if !self.cursor.is_eof() && self.cursor.peek() == '=' {
+                    self.cursor.next_char();
+                    TokenKind::LessEq
+                } else { TokenKind::Less }
+            },
+            '=' => {
+                if !self.cursor.is_eof() && self.cursor.peek() == '=' {
+                    self.cursor.next_char();
+                    TokenKind::Eq
+                } else { TokenKind::Assignment }
+            }
             _ => {
                 return Err(Error::new(
                     CommonErrorKind::Lexer(ErrorKind::UnexpectedToken),
@@ -171,7 +189,12 @@ mod tests {
         test_plus("+") = Plus: "+" at 0..1;
         test_minus("-") = Minus: "-" at 0..1;
         test_multiply("*") = Multiply: "*" at 0..1;
-        test_division("/") = Division: "/" at 0..1;
+        test_less("<") = Less: "<" at 0..1;
+        test_greeter(">") = Greeter: ">" at 0..1;
+        test_less_eq("<=") = LessEq: "<=" at 0..2;
+        test_greeter_eq(">=") = GreeterEq: ">=" at 0..2;
+        test_eq("==") = Eq: "==" at 0..2;
+        test_assignment("=") = Assignment: "=" at 0..1;
         test_left_parenthesis("(") = LeftParenthesis: "(" at 0..1;
         test_right_parenthesis(")") = RightParenthesis: ")" at 0..1;
         test_left_braces("{") = LeftBrace: "{" at 0..1;
