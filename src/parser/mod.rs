@@ -5,10 +5,16 @@ use crate::{common::error::Result, lexer::token::Token};
 use self::cursor::Cursor;
 
 pub mod cursor;
+pub mod delimited;
 pub mod error;
 pub mod expression;
+pub mod function;
 pub mod primitive;
 pub mod punctuated;
+
+pub trait SyntaxKind<'source> {
+    fn test<I: Index<usize, Output = Token<'source>>>(cursor: &Cursor<'source, I>) -> bool;
+}
 
 pub trait Parse<'source>: Sized {
     fn parse<I: Index<usize, Output = Token<'source>>>(

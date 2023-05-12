@@ -3,7 +3,7 @@ use std::{path::Path, result};
 use lexer::Lexer;
 use rustyline::{error::ReadlineError, DefaultEditor, Result};
 
-use crate::{interpreter::eval, parser::expression::Expression};
+use crate::parser::function::Function;
 
 pub mod common;
 pub mod interpreter;
@@ -30,7 +30,7 @@ fn main() -> Result<()> {
                 };
 
                 let mut cursor = parser::cursor::Cursor::new(tokens.len(), tokens);
-                let expression = match cursor.parse::<Expression>() {
+                let expression = match cursor.parse::<Function>() {
                     Ok(expression) => expression,
                     Err(err) => {
                         eprintln!("{err}");
@@ -38,7 +38,7 @@ fn main() -> Result<()> {
                     }
                 };
 
-                println!("{}", eval(expression));
+                println!("{:#?}", expression);
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");

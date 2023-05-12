@@ -5,12 +5,12 @@ use crate::{
     lexer::token::{Token, TokenKind},
 };
 
-use super::{cursor::Cursor, Parse};
+use super::{cursor::Cursor, Parse, SyntaxKind};
 
 macro_rules! implement_primitive {
     ($($kind: ident),*) => {
         $(
-            #[derive(Debug, Clone, PartialEq)]
+            #[derive(Debug, Clone, PartialEq, Eq)]
             pub struct $kind;
             impl<'source> Parse<'source> for $kind {
                 fn parse<I: Index<usize, Output = Token<'source>>>(
@@ -20,9 +20,12 @@ macro_rules! implement_primitive {
                     Ok($kind)
                 }
             }
-            impl $kind {
-                pub fn from_slice<'source>(_: &'source str) -> Self {
-                    Self
+
+            impl<'source> SyntaxKind<'source> for $kind {
+                fn test<I: Index<usize, Output = Token<'source>>>(
+                    cursor: &Cursor<'source, I>,
+                ) -> bool {
+                    cursor.test(&[TokenKind::$kind]).unwrap_or_default()
                 }
             }
         )*
@@ -30,9 +33,9 @@ macro_rules! implement_primitive {
 }
 
 macro_rules! implement_primitive_inner {
-    ($($kind: ident<$lt: lifetime>),*) => {
+        ($($kind: ident<$lt: lifetime>),*) => {
         $(
-            #[derive(Debug, Clone, PartialEq)]
+            #[derive(Debug, Clone, PartialEq, Eq)]
             pub struct $kind<$lt>(pub &$lt str);
 
             impl<$lt> Parse<$lt> for $kind<$lt> {
@@ -43,19 +46,62 @@ macro_rules! implement_primitive_inner {
                     Ok($kind(token.chunk.slice))
                 }
             }
+
+            impl<$lt> SyntaxKind<$lt> for $kind<$lt> {
+                fn test<I: Index<usize, Output = Token<$lt>>>(
+                    cursor: &Cursor<$lt, I>,
+                ) -> bool {
+                    cursor.test(&[TokenKind::$kind]).unwrap_or_default()
+                }
+            }
         )*
     };
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Empty;
+impl<'source> SyntaxKind<'source> for Empty {
+    fn test<I: Index<usize, Output = Token<'source>>>(_: &Cursor<'source, I>) -> bool {
+        false
+    }
+}
 
-implement_primitive!(Plus, Minus, Multiply, Division, LeftParenthesis, RightParenthesis, Comma);
+impl<'source, T: Parse<'source> + SyntaxKind<'source>> Parse<'source> for Option<T> {
+    fn parse<I: Index<usize, Output = Token<'source>>>(
+        cursor: &mut Cursor<'source, I>,
+    ) -> Result<'source, Self> {
+        if T::test(cursor) {
+            Ok(Some(cursor.parse()?))
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+implement_primitive!(
+    Plus,
+    Minus,
+    Multiply,
+    Division,
+    LeftParenthesis,
+    RightParenthesis,
+    LeftBrace,
+    RightBrace,
+    Comma,
+    Colon,
+    Semicolon,
+    FuncKw
+);
 implement_primitive_inner!(Integer<'source>, Float<'source>, Identifier<'source>);
 
 #[cfg(test)]
 mod tests {
-    use crate::{tests};
+    use crate::tests;
 
-    use super::{Plus, Minus, Multiply, Division, Integer, Float, Comma, LeftParenthesis, RightParenthesis, Identifier};
+    use super::{
+        Comma, Division, Float, Identifier, Integer, LeftParenthesis, Minus, Multiply, Plus,
+        RightParenthesis,
+    };
 
     tests! {
         test_plus("+"): Plus;
@@ -67,6 +113,8 @@ mod tests {
         test_comma(","): Comma;
         test_integer("3"): Integer("3");
         test_float("3.14"): Float("3.14");
-        test_identifier("test"): Identifier("test")
+        test_identifier("test"): Identifier("test");
+        test_none_identifier<Option<Identifier>>(""): None;
+        test_some_identifier<Option<Identifier>>("some"): Some(Identifier("some"));
     }
 }

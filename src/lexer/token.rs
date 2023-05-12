@@ -74,15 +74,24 @@ impl<'source> Token<'source> {
 pub enum TokenKind {
     Integer,
     Float,
+    Identifier,
+
     Plus,
     Minus,
     Multiply,
     Division,
+
     Comma,
     LeftParenthesis,
     RightParenthesis,
-    Identifier,
+    LeftBrace,
+    RightBrace,
+    Colon,
+    Semicolon,
+
+    FuncKw,
 }
+
 impl Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -96,6 +105,11 @@ impl Display for TokenKind {
             TokenKind::RightParenthesis => write!(f, "right parenthesis"),
             TokenKind::Comma => write!(f, "comma"),
             TokenKind::Identifier => write!(f, "identifier"),
+            TokenKind::Colon => write!(f, "colon"),
+            TokenKind::Semicolon => write!(f, "semicolon"),
+            TokenKind::FuncKw => write!(f, "func"),
+            TokenKind::LeftBrace => write!(f, "left brace"),
+            TokenKind::RightBrace => write!(f, "right brace"),
         }
     }
 }

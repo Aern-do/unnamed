@@ -78,7 +78,11 @@ impl<'source> Lexer<'source> {
         while !self.cursor.is_eof() && self.is_identifier_continue() {
             self.cursor.next_char();
         }
-        Ok(Token::new(TokenKind::Identifier, self.cursor.chunk()))
+        let chunk = self.cursor.chunk();
+        Ok(match chunk.slice {
+            "func" => Token::new(TokenKind::FuncKw, chunk),
+            _ => Token::new(TokenKind::Identifier, chunk),
+        })
     }
 
     pub fn lex_special_symbols(&mut self) -> Result<'source, Token<'source>> {
@@ -90,6 +94,10 @@ impl<'source> Lexer<'source> {
             '(' => TokenKind::LeftParenthesis,
             ')' => TokenKind::RightParenthesis,
             ',' => TokenKind::Comma,
+            ':' => TokenKind::Colon,
+            ';' => TokenKind::Semicolon,
+            '{' => TokenKind::LeftBrace,
+            '}' => TokenKind::RightBrace,
             _ => {
                 return Err(Error::new(
                     CommonErrorKind::Lexer(ErrorKind::UnexpectedToken),
@@ -163,6 +171,12 @@ mod tests {
         test_division("/") = Division: "/" at 0..1;
         test_left_parenthesis("(") = LeftParenthesis: "(" at 0..1;
         test_right_parenthesis(")") = RightParenthesis: ")" at 0..1;
+        test_left_braces("{") = LeftBrace: "{" at 0..1;
+        test_right_braces("}") = RightBrace: "}" at 0..1;
+        test_comma(",") = Comma: "," at 0..1;
+        test_colon(":") = Colon: ":" at 0..1;
+        test_semicolon(";") = Semicolon: ";" at 0..1;
+        test_func_kw("func") = FuncKw: "func" at 0..4;
         test_skip_whitespaces("  123  456  ") = Integer: "123" at 2..5, Integer: "456" at 7..10;
         test_complex("2 + 2 * 2") = Integer: "2" at 0..1, Plus: "+" at 2..3, Integer: "2" at 4..5, Multiply: "*" at 6..7, Integer: "2" at 8..9;
     );
