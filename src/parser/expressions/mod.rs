@@ -1,4 +1,5 @@
 pub mod if_expr;
+pub mod while_expr;
 
 use std::ops::Index;
 
@@ -7,7 +8,7 @@ use crate::{
     lexer::token::{Token, TokenKind},
 };
 
-use self::if_expr::IfExpression;
+use self::{if_expr::IfExpression, while_expr::WhileExpression};
 
 use super::{
     cursor::Cursor,
@@ -83,6 +84,7 @@ impl<'source> Parse<'source> for Literal<'source> {
 pub enum Expression<'source> {
     Literal(Literal<'source>),
     If(IfExpression<'source>),
+    While(WhileExpression<'source>),
     Call {
         ident: Identifier<'source>,
         arguments: Punctuated<'source, Expression<'source>, Comma, RightParenthesis>,
@@ -105,6 +107,7 @@ impl<'source> Expression<'source> {
             TokenKind::LeftParenthesis,
             TokenKind::Identifier,
             TokenKind::IfKw,
+            TokenKind::WhileKw,
         ])?;
         let mut lhs = match lhs.kind {
             TokenKind::Identifier => {
@@ -122,6 +125,7 @@ impl<'source> Expression<'source> {
                 expr
             }
             TokenKind::IfKw => Expression::If(cursor.parse()?),
+            TokenKind::WhileKw => Expression::While(cursor.parse()?),
             TokenKind::Float | TokenKind::Integer => Expression::Literal(cursor.parse()?),
             TokenKind::LeftParenthesis => {
                 cursor.next_token()?;
@@ -184,6 +188,7 @@ mod tests {
 
     use super::{
         if_expr::{Alternative, IfExpression},
+        while_expr::WhileExpression,
         Expression, Literal, Operator,
     };
 
@@ -236,7 +241,7 @@ mod tests {
         test_parenthesis("(2 + 2) * 2"): infix!(infix!(int!(2), Plus, int!(2)), Multiply, int!(2));
         test_simple_if("if a {}"): IfExpression::new(ident!(a), empty_body!(), None);
         test_if_with_end_else("if a {} else {}"): IfExpression::new(ident!(a), empty_body!(), Some(Alternative::End(empty_body!())));
-        test_if_with_if_else("if a {} else if b {}"): IfExpression::new(ident!(a), empty_body!(), Some(Alternative::If(Box::new(IfExpression::new(ident!(b), empty_body!(), None)))))
-
+        test_if_with_if_else("if a {} else if b {}"): IfExpression::new(ident!(a), empty_body!(), Some(Alternative::If(Box::new(IfExpression::new(ident!(b), empty_body!(), None)))));
+        test_while_expression("while 42 {}"): WhileExpression::new(int!(42), empty_body!())
     }
 }

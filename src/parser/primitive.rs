@@ -100,7 +100,8 @@ implement_primitive!(
     Semicolon,
     FuncKw,
     IfKw,
-    ElseKw
+    ElseKw,
+    WhileKw
 );
 implement_primitive_inner!(Integer<'source>, Float<'source>, Identifier<'source>);
 
