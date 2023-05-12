@@ -91,7 +91,7 @@ pub enum TokenKind {
 
     FuncKw,
     IfKw,
-    ElseKw
+    ElseKw,
 }
 
 impl Display for TokenKind {

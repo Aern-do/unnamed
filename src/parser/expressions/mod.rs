@@ -1,9 +1,13 @@
+pub mod if_expr;
+
 use std::ops::Index;
 
 use crate::{
     common::error::Result,
     lexer::token::{Token, TokenKind},
 };
+
+use self::if_expr::IfExpression;
 
 use super::{
     cursor::Cursor,
@@ -78,6 +82,7 @@ impl<'source> Parse<'source> for Literal<'source> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expression<'source> {
     Literal(Literal<'source>),
+    If(IfExpression<'source>),
     Call {
         ident: Identifier<'source>,
         arguments: Punctuated<'source, Expression<'source>, Comma, RightParenthesis>,
@@ -99,6 +104,7 @@ impl<'source> Expression<'source> {
             TokenKind::Float,
             TokenKind::LeftParenthesis,
             TokenKind::Identifier,
+            TokenKind::IfKw,
         ])?;
         let mut lhs = match lhs.kind {
             TokenKind::Identifier => {
@@ -112,9 +118,10 @@ impl<'source> Expression<'source> {
                 } else {
                     Expression::Literal(Literal::Identifier(ident))
                 };
-                
+
                 expr
             }
+            TokenKind::IfKw => Expression::If(cursor.parse()?),
             TokenKind::Float | TokenKind::Integer => Expression::Literal(cursor.parse()?),
             TokenKind::LeftParenthesis => {
                 cursor.next_token()?;
@@ -131,6 +138,7 @@ impl<'source> Expression<'source> {
                 TokenKind::RightBrace,
                 TokenKind::Comma,
                 TokenKind::Semicolon,
+                TokenKind::LeftBrace,
             ])? {
                 break;
             }
@@ -167,13 +175,17 @@ impl<'source> Parse<'source> for Expression<'source> {
 mod tests {
     use crate::{
         parser::{
+            delimited::Delimited,
             primitive::{Float, Identifier, Integer},
             punctuated::Punctuated,
         },
         tests,
     };
 
-    use super::{Expression, Literal, Operator};
+    use super::{
+        if_expr::{Alternative, IfExpression},
+        Expression, Literal, Operator,
+    };
 
     macro_rules! int {
         ($lit: literal) => {
@@ -207,6 +219,12 @@ mod tests {
         };
     }
 
+    macro_rules! empty_body {
+        () => {
+            Delimited::new(Punctuated::new(vec![]))
+        };
+    }
+
     tests! {
         test_integer("10"): int!(10);
         test_float("1.0"): float!(1.0);
@@ -216,5 +234,9 @@ mod tests {
         test_call_one_arg("test(1)"): call!(test(int!(1)));
         test_call_many_args("test(1, 2.0)"): call!(test(int!(1), float!(2.0)));
         test_parenthesis("(2 + 2) * 2"): infix!(infix!(int!(2), Plus, int!(2)), Multiply, int!(2));
+        test_simple_if("if a {}"): IfExpression::new(ident!(a), empty_body!(), None);
+        test_if_with_end_else("if a {} else {}"): IfExpression::new(ident!(a), empty_body!(), Some(Alternative::End(empty_body!())));
+        test_if_with_if_else("if a {} else if b {}"): IfExpression::new(ident!(a), empty_body!(), Some(Alternative::If(Box::new(IfExpression::new(ident!(b), empty_body!(), None)))))
+
     }
 }

@@ -53,7 +53,10 @@ pub type Braced<'source, T> = Delimited<'source, LeftBrace, T, RightBrace>;
 
 #[cfg(test)]
 mod tests {
-    use crate::{tests, parser::primitive::{Integer, LeftParenthesis, RightParenthesis}};
+    use crate::{
+        parser::primitive::{Integer, LeftParenthesis, RightParenthesis},
+        tests,
+    };
 
     use super::Delimited;
 

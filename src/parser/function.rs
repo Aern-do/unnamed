@@ -1,10 +1,10 @@
 use derive_macro::Parse;
 
 use super::{
-    delimited::{Braced, Parenthesized},
-    expression::Expression,
-    primitive::{Colon, Comma, FuncKw, Identifier, RightBrace, RightParenthesis, Semicolon},
+    delimited::Parenthesized,
+    primitive::{Colon, Comma, FuncKw, Identifier, RightParenthesis},
     punctuated::Punctuated,
+    Block,
 };
 
 #[derive(Parse, Debug, Clone, PartialEq, Eq)]
@@ -23,7 +23,7 @@ pub struct Function<'source> {
     pub colon: Option<Colon>,
     #[parse_if(colon.is_some())]
     pub return_ty: Option<Identifier<'source>>,
-    pub block: Braced<'source, Punctuated<'source, Expression<'source>, Semicolon, RightBrace>>,
+    pub block: Block<'source>,
 }
 
 #[cfg(test)]
