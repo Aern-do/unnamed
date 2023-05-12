@@ -96,8 +96,8 @@ impl<'source> Lexer<'source> {
             ',' => TokenKind::Comma,
             ':' => TokenKind::Colon,
             ';' => TokenKind::Semicolon,
-            '{' => TokenKind::LeftBraces,
-            '}' => TokenKind::RightBraces,
+            '{' => TokenKind::LeftBrace,
+            '}' => TokenKind::RightBrace,
             _ => {
                 return Err(Error::new(
                     CommonErrorKind::Lexer(ErrorKind::UnexpectedToken),
@@ -171,8 +171,8 @@ mod tests {
         test_division("/") = Division: "/" at 0..1;
         test_left_parenthesis("(") = LeftParenthesis: "(" at 0..1;
         test_right_parenthesis(")") = RightParenthesis: ")" at 0..1;
-        test_left_braces("{") = LeftBraces: "{" at 0..1;
-        test_right_braces("}") = RightBraces: "}" at 0..1;
+        test_left_braces("{") = LeftBrace: "{" at 0..1;
+        test_right_braces("}") = RightBrace: "}" at 0..1;
         test_comma(",") = Comma: "," at 0..1;
         test_colon(":") = Colon: ":" at 0..1;
         test_semicolon(";") = Semicolon: ";" at 0..1;

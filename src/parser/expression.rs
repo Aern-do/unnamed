@@ -128,7 +128,7 @@ impl<'source> Expression<'source> {
         loop {
             if cursor.test(&[
                 TokenKind::RightParenthesis,
-                TokenKind::RightBraces,
+                TokenKind::RightBrace,
                 TokenKind::Comma,
                 TokenKind::Semicolon,
             ])? {

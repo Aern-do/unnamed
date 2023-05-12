@@ -4,7 +4,7 @@ use crate::{common::error::Result, lexer::token::Token};
 
 use super::{
     cursor::Cursor,
-    primitive::{LeftBraces, LeftParenthesis, RightBraces, RightParenthesis},
+    primitive::{LeftBrace, LeftParenthesis, RightBrace, RightParenthesis},
     Parse,
 };
 
@@ -36,7 +36,7 @@ impl<'source, L: Parse<'source>, T: Parse<'source>, R: Parse<'source>> Parse<'so
         cursor.parse::<L>()?;
 
         let inner = cursor.parse()?;
-        
+
         cursor.parse::<R>()?;
 
         Ok(Self {
@@ -49,7 +49,7 @@ impl<'source, L: Parse<'source>, T: Parse<'source>, R: Parse<'source>> Parse<'so
 }
 
 pub type Parenthesized<'source, T> = Delimited<'source, LeftParenthesis, T, RightParenthesis>;
-pub type Braced<'source, T> = Delimited<'source, LeftBraces, T, RightBraces>;
+pub type Braced<'source, T> = Delimited<'source, LeftBrace, T, RightBrace>;
 
 #[cfg(test)]
 mod tests {

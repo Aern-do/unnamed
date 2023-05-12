@@ -84,8 +84,8 @@ pub enum TokenKind {
     Comma,
     LeftParenthesis,
     RightParenthesis,
-    LeftBraces,
-    RightBraces,
+    LeftBrace,
+    RightBrace,
     Colon,
     Semicolon,
 
@@ -108,8 +108,8 @@ impl Display for TokenKind {
             TokenKind::Colon => write!(f, "colon"),
             TokenKind::Semicolon => write!(f, "semicolon"),
             TokenKind::FuncKw => write!(f, "func"),
-            TokenKind::LeftBraces => write!(f, "left braces"),
-            TokenKind::RightBraces => write!(f, "right braces"),
+            TokenKind::LeftBrace => write!(f, "left brace"),
+            TokenKind::RightBrace => write!(f, "right brace"),
         }
     }
 }
