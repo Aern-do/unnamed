@@ -4,8 +4,10 @@ pub mod while_expr;
 use std::ops::Index;
 
 use crate::{
+    check,
     common::error::Result,
-    lexer::token::{Token, TokenKind}, check, consume,
+    consume,
+    lexer::token::{Token, TokenKind},
 };
 
 use self::{if_expr::IfExpression, while_expr::WhileExpression};
@@ -28,7 +30,7 @@ pub enum Operator {
     Greeter,
     GreeterEq,
     Eq,
-    Assignment
+    Assignment,
 }
 
 impl Operator {
@@ -38,7 +40,7 @@ impl Operator {
             Operator::Plus | Operator::Minus => (2, 3),
             Operator::Multiply | Operator::Division => (4, 5),
             Operator::Less | Operator::LessEq | Operator::Greeter | Operator::GreeterEq => (6, 7),
-            Operator::Eq => (8, 9)
+            Operator::Eq => (8, 9),
         }
     }
 }
@@ -98,6 +100,15 @@ pub enum Expression<'source> {
 }
 
 impl<'source> Expression<'source> {
+    pub const POSSIBLE_TOKENS: &'static [TokenKind] = &[
+        TokenKind::Identifier,
+        TokenKind::IfKw,
+        TokenKind::WhileKw,
+        TokenKind::Float,
+        TokenKind::Integer,
+        TokenKind::LeftParenthesis,
+    ];
+
     fn parse_bp<I: Index<usize, Output = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
         min_bp: u8,
@@ -184,29 +195,35 @@ mod tests {
         Expression, Literal, Operator,
     };
 
+    #[macro_export]
     macro_rules! int {
         ($lit: literal) => {
             Expression::Literal(Literal::Integer(Integer(stringify!($lit))))
         };
     }
 
+    #[macro_export]
     macro_rules! float {
         ($lit: literal) => {
             Expression::Literal(Literal::Float(Float(stringify!($lit))))
         };
     }
 
+    #[macro_export]
     macro_rules! ident {
         ($lit: ident) => {
             Expression::Literal(Literal::Identifier(Identifier(stringify!($lit))))
         };
     }
 
+    #[macro_export]
     macro_rules! infix {
         ($lhs: expr, $op: ident, $rhs: expr) => {
             Expression::Infix { lhs: Box::new($lhs), operator: Operator::$op, rhs: Box::new($rhs) }
         };
     }
+
+    #[macro_export]
     macro_rules! call {
         ($ident: ident($($arg: expr),*)) => {
             Expression::Call {

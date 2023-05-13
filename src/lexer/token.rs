@@ -86,7 +86,6 @@ pub enum TokenKind {
     GreeterEq,
     Eq,
     Assignment,
-    
 
     Comma,
     LeftParenthesis,
@@ -100,6 +99,9 @@ pub enum TokenKind {
     IfKw,
     ElseKw,
     WhileKw,
+    LetKw,
+    MutKw,
+    ReturnKw,
 }
 
 impl Display for TokenKind {
@@ -129,6 +131,9 @@ impl Display for TokenKind {
             TokenKind::GreeterEq => write!(f, "greeter or eq"),
             TokenKind::Eq => write!(f, "eq"),
             TokenKind::Assignment => write!(f, "assignment"),
+            TokenKind::LetKw => write!(f, "let"),
+            TokenKind::MutKw => write!(f, "mut"),
+            TokenKind::ReturnKw => write!(f, "return"),
         }
     }
 }

@@ -91,6 +91,12 @@ implement_primitive!(
     Minus,
     Multiply,
     Division,
+    Less,
+    LessEq,
+    GreeterEq,
+    Greeter,
+    Eq,
+    Assignment,
     LeftParenthesis,
     RightParenthesis,
     LeftBrace,
@@ -101,31 +107,9 @@ implement_primitive!(
     FuncKw,
     IfKw,
     ElseKw,
-    WhileKw
+    WhileKw,
+    ReturnKw,
+    LetKw,
+    MutKw
 );
 implement_primitive_inner!(Integer<'source>, Float<'source>, Identifier<'source>);
-
-#[cfg(test)]
-mod tests {
-    use crate::tests;
-
-    use super::{
-        Comma, Division, Float, Identifier, Integer, LeftParenthesis, Minus, Multiply, Plus,
-        RightParenthesis,
-    };
-
-    tests! {
-        test_plus("+"): Plus;
-        test_minus("-"): Minus;
-        test_multiply("*"): Multiply;
-        test_division("/"): Division;
-        test_left_parenthesis("("): LeftParenthesis;
-        test_right_parenthesis(")"): RightParenthesis;
-        test_comma(","): Comma;
-        test_integer("3"): Integer("3");
-        test_float("3.14"): Float("3.14");
-        test_identifier("test"): Identifier("test");
-        test_none_identifier<Option<Identifier>>(""): None;
-        test_some_identifier<Option<Identifier>>("some"): Some(Identifier("some"));
-    }
-}

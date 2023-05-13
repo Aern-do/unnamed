@@ -5,9 +5,9 @@ use crate::{common::error::Result, lexer::token::Token};
 use self::{
     cursor::Cursor,
     delimited::Braced,
-    expressions::Expression,
     primitive::{RightBrace, Semicolon},
     punctuated::Punctuated,
+    statements::Statement,
 };
 
 pub mod cursor;
@@ -17,9 +17,10 @@ pub mod expressions;
 pub mod function;
 pub mod primitive;
 pub mod punctuated;
+pub mod statements;
 
 pub type Block<'source> =
-    Braced<'source, Punctuated<'source, Expression<'source>, Semicolon, RightBrace>>;
+    Braced<'source, Punctuated<'source, Statement<'source>, Semicolon, RightBrace>>;
 
 pub trait SyntaxKind<'source> {
     fn test<I: Index<usize, Output = Token<'source>>>(cursor: &Cursor<'source, I>) -> bool;
