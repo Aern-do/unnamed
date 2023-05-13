@@ -54,3 +54,29 @@ macro_rules! tests {
 
     };
 }
+
+#[macro_export]
+macro_rules! consume {
+    ($cursor: ident($token: ident) { $($v1: ident $(| $v2: ident)* => $body: expr),* $(,)? }) => {{
+        let $token = $cursor.consume(&[
+            $(TokenKind::$v1, $(TokenKind::$v2),*)*
+        ])?;
+        match $token.kind {
+            $(TokenKind::$v1 $(| TokenKind::$v2)* => $body),*,
+            _ => unreachable!()
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! check {
+    ($cursor: ident($token: ident) { $($v1: ident $(| $v2: ident)* => $body: expr),* $(,)? }) => {{
+        let $token = $cursor.check(&[
+            $(TokenKind::$v1, $(TokenKind::$v2,)*)*
+        ])?;
+        match $token.kind {
+            $(TokenKind::$v1 $(| TokenKind::$v2)* => $body),*,
+            _ => unreachable!()
+        }
+    }};
+}

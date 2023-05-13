@@ -77,7 +77,7 @@ impl<'source, I: Index<usize, Output = Token<'source>>> Cursor<'source, I> {
         }
     }
 
-    pub fn test_and_return(
+    pub fn check(
         &mut self,
         expected: &'static [TokenKind],
     ) -> Result<'source, Token<'source>> {

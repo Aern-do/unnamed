@@ -11,7 +11,6 @@ pub mod parser;
 
 fn main() -> Result<()> {
     let mut rl = DefaultEditor::new()?;
-
     loop {
         let readline = rl.readline("> ");
 
