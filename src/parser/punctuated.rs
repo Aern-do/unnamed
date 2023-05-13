@@ -1,10 +1,10 @@
-use std::{marker::PhantomData, ops::Index};
+use std::{fmt::Debug, marker::PhantomData, ops::Index};
 
 use crate::{common::error::Result, lexer::token::Token};
 
 use super::{cursor::Cursor, primitive::Empty, Parse, SyntaxKind};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Punctuated<
     'source,
     T: Parse<'source>,
@@ -15,6 +15,18 @@ pub struct Punctuated<
     _separator: PhantomData<S>,
     _stop: PhantomData<P>,
     _lifetime: PhantomData<&'source ()>,
+}
+
+impl<
+        'source,
+        T: Parse<'source> + Debug,
+        S: SyntaxKind<'source> + Parse<'source>,
+        P: SyntaxKind<'source>,
+    > Debug for Punctuated<'source, T, S, P>
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Punctuated").field("elements", &self.elements).finish()
+    }
 }
 
 impl<

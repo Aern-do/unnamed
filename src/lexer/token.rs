@@ -86,7 +86,6 @@ pub enum TokenKind {
     GreeterEq,
     Eq,
     Assignment,
-    
 
     Comma,
     LeftParenthesis,

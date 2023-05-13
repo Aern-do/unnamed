@@ -77,10 +77,7 @@ impl<'source, I: Index<usize, Output = Token<'source>>> Cursor<'source, I> {
         }
     }
 
-    pub fn check(
-        &mut self,
-        expected: &'static [TokenKind],
-    ) -> Result<'source, Token<'source>> {
+    pub fn check(&mut self, expected: &'static [TokenKind]) -> Result<'source, Token<'source>> {
         if self.test(expected)? {
             self.peek()
         } else {

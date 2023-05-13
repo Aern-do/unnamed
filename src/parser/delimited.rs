@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, ops::Index};
+use std::{fmt::Debug, marker::PhantomData, ops::Index};
 
 use crate::{common::error::Result, lexer::token::Token};
 
@@ -8,12 +8,20 @@ use super::{
     Parse,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Delimited<'source, L: Parse<'source>, T: Parse<'source>, R: Parse<'source>> {
     _left_delimiter: PhantomData<L>,
     pub inner: T,
     _right_delimiter: PhantomData<R>,
     _lifetime: PhantomData<&'source ()>,
+}
+
+impl<'soure, L: Parse<'soure>, T: Parse<'soure> + Debug, R: Parse<'soure>> Debug
+    for Delimited<'soure, L, T, R>
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Delimited").field("inner", &self.inner).finish()
+    }
 }
 
 impl<'source, L: Parse<'source>, T: Parse<'source>, R: Parse<'source>> Delimited<'source, L, T, R> {

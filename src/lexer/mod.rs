@@ -108,19 +108,25 @@ impl<'source> Lexer<'source> {
                 if !self.cursor.is_eof() && self.cursor.peek() == '=' {
                     self.cursor.next_char();
                     TokenKind::GreeterEq
-                } else { TokenKind::Greeter }
-            },
+                } else {
+                    TokenKind::Greeter
+                }
+            }
             '<' => {
                 if !self.cursor.is_eof() && self.cursor.peek() == '=' {
                     self.cursor.next_char();
                     TokenKind::LessEq
-                } else { TokenKind::Less }
-            },
+                } else {
+                    TokenKind::Less
+                }
+            }
             '=' => {
                 if !self.cursor.is_eof() && self.cursor.peek() == '=' {
                     self.cursor.next_char();
                     TokenKind::Eq
-                } else { TokenKind::Assignment }
+                } else {
+                    TokenKind::Assignment
+                }
             }
             _ => {
                 return Err(Error::new(
