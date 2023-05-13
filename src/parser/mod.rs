@@ -17,6 +17,7 @@ pub mod expressions;
 pub mod function;
 pub mod primitive;
 pub mod punctuated;
+pub mod statements;
 
 pub type Block<'source> =
     Braced<'source, Punctuated<'source, Expression<'source>, Semicolon, RightBrace>>;

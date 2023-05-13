@@ -84,6 +84,9 @@ impl<'source> Lexer<'source> {
             "if" => Token::new(TokenKind::IfKw, chunk),
             "else" => Token::new(TokenKind::ElseKw, chunk),
             "while" => Token::new(TokenKind::WhileKw, chunk),
+            "return" => Token::new(TokenKind::ReturnKw, chunk),
+            "let" => Token::new(TokenKind::LetKw, chunk),
+            "mut" => Token::new(TokenKind::MutKw, chunk),
             _ => Token::new(TokenKind::Identifier, chunk),
         })
     }
@@ -206,6 +209,10 @@ mod tests {
         test_if_kw("if") = IfKw: "if" at 0..2;
         test_else_kw("else") = ElseKw: "else" at 0..4;
         test_while_kw("while") = WhileKw: "while" at 0..5;
+        test_return_kw("return") = ReturnKw: "return" at 0..6;
+        test_let_kw("let") = LetKw: "let" at 0..3;
+        test_mut_kw("mut") = MutKw: "mut" at 0..3;
+
         test_skip_whitespaces("  123  456  ") = Integer: "123" at 2..5, Integer: "456" at 7..10;
         test_complex("2 + 2 * 2") = Integer: "2" at 0..1, Plus: "+" at 2..3, Integer: "2" at 4..5, Multiply: "*" at 6..7, Integer: "2" at 8..9;
     );
