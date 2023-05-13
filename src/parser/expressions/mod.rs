@@ -1,9 +1,14 @@
+pub mod if_expr;
+pub mod while_expr;
+
 use std::ops::Index;
 
 use crate::{
     common::error::Result,
-    lexer::token::{Token, TokenKind},
+    lexer::token::{Token, TokenKind}, check, consume,
 };
+
+use self::{if_expr::IfExpression, while_expr::WhileExpression};
 
 use super::{
     cursor::Cursor,
@@ -18,13 +23,22 @@ pub enum Operator {
     Minus,
     Multiply,
     Division,
+    Less,
+    LessEq,
+    Greeter,
+    GreeterEq,
+    Eq,
+    Assignment
 }
 
 impl Operator {
     pub fn binding_power(&self) -> (u8, u8) {
         match self {
-            Operator::Plus | Operator::Minus => (1, 2),
-            Operator::Multiply | Operator::Division => (3, 4),
+            Operator::Assignment => (0, 1),
+            Operator::Plus | Operator::Minus => (2, 3),
+            Operator::Multiply | Operator::Division => (4, 5),
+            Operator::Less | Operator::LessEq | Operator::Greeter | Operator::GreeterEq => (6, 7),
+            Operator::Eq => (8, 9)
         }
     }
 }
@@ -33,19 +47,18 @@ impl<'source> Parse<'source> for Operator {
     fn parse<I: Index<usize, Output = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
     ) -> Result<'source, Self> {
-        let token = cursor.consume(&[
-            TokenKind::Plus,
-            TokenKind::Minus,
-            TokenKind::Multiply,
-            TokenKind::Division,
-        ])?;
-        Ok(match token.kind {
-            TokenKind::Plus => Operator::Plus,
-            TokenKind::Minus => Operator::Minus,
-            TokenKind::Multiply => Operator::Multiply,
-            TokenKind::Division => Operator::Division,
-            _ => unreachable!(),
-        })
+        Ok(consume!(cursor(_token) {
+            Plus => Operator::Plus,
+            Minus => Operator::Minus,
+            Multiply => Operator::Multiply,
+            Division => Operator::Division,
+            Less => Operator::Less,
+            LessEq => Operator::LessEq,
+            Greeter => Operator::Greeter,
+            GreeterEq => Operator::GreeterEq,
+            Eq => Operator::Eq,
+            Assignment => Operator::Assignment
+        }))
     }
 }
 
@@ -60,24 +73,19 @@ impl<'source> Parse<'source> for Literal<'source> {
     fn parse<I: Index<usize, Output = Token<'source>>>(
         cursor: &mut Cursor<'source, I>,
     ) -> Result<'source, Self> {
-        let token = cursor.test_and_return(&[
-            TokenKind::Integer,
-            TokenKind::Float,
-            TokenKind::Identifier,
-        ])?;
-
-        Ok(match token.kind {
-            TokenKind::Integer => Self::Integer(cursor.parse()?),
-            TokenKind::Float => Self::Float(cursor.parse()?),
-            TokenKind::Identifier => Self::Identifier(cursor.parse()?),
-            _ => unreachable!(),
-        })
+        Ok(check!(cursor(_token) {
+            Integer => Literal::Integer(cursor.parse()?),
+            Float => Literal::Float(cursor.parse()?),
+            Identifier => Literal::Identifier(cursor.parse()?)
+        }))
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expression<'source> {
     Literal(Literal<'source>),
+    If(IfExpression<'source>),
+    While(WhileExpression<'source>),
     Call {
         ident: Identifier<'source>,
         arguments: Punctuated<'source, Expression<'source>, Comma, RightParenthesis>,
@@ -94,14 +102,8 @@ impl<'source> Expression<'source> {
         cursor: &mut Cursor<'source, I>,
         min_bp: u8,
     ) -> Result<'source, Self> {
-        let lhs = cursor.test_and_return(&[
-            TokenKind::Integer,
-            TokenKind::Float,
-            TokenKind::LeftParenthesis,
-            TokenKind::Identifier,
-        ])?;
-        let mut lhs = match lhs.kind {
-            TokenKind::Identifier => {
+        let mut lhs = check!(cursor(_lhs) {
+            Identifier => {
                 let ident = cursor.parse()?;
 
                 let expr = if cursor.test(&[TokenKind::LeftParenthesis])? {
@@ -112,18 +114,19 @@ impl<'source> Expression<'source> {
                 } else {
                     Expression::Literal(Literal::Identifier(ident))
                 };
-                
+
                 expr
-            }
-            TokenKind::Float | TokenKind::Integer => Expression::Literal(cursor.parse()?),
-            TokenKind::LeftParenthesis => {
+            },
+            IfKw => Expression::If(cursor.parse()?),
+            WhileKw => Expression::While(cursor.parse()?),
+            Float | Integer => Expression::Literal(cursor.parse()?),
+            LeftParenthesis => {
                 cursor.next_token()?;
                 let expression = cursor.parse::<Expression>()?;
                 cursor.parse::<RightParenthesis>()?;
                 expression
             }
-            _ => unreachable!(),
-        };
+        });
 
         loop {
             if cursor.test(&[
@@ -131,6 +134,7 @@ impl<'source> Expression<'source> {
                 TokenKind::RightBrace,
                 TokenKind::Comma,
                 TokenKind::Semicolon,
+                TokenKind::LeftBrace,
             ])? {
                 break;
             }
@@ -167,13 +171,18 @@ impl<'source> Parse<'source> for Expression<'source> {
 mod tests {
     use crate::{
         parser::{
+            delimited::Delimited,
             primitive::{Float, Identifier, Integer},
             punctuated::Punctuated,
         },
         tests,
     };
 
-    use super::{Expression, Literal, Operator};
+    use super::{
+        if_expr::{Alternative, IfExpression},
+        while_expr::WhileExpression,
+        Expression, Literal, Operator,
+    };
 
     macro_rules! int {
         ($lit: literal) => {
@@ -207,6 +216,12 @@ mod tests {
         };
     }
 
+    macro_rules! empty_body {
+        () => {
+            Delimited::new(Punctuated::new(vec![]))
+        };
+    }
+
     tests! {
         test_integer("10"): int!(10);
         test_float("1.0"): float!(1.0);
@@ -216,5 +231,9 @@ mod tests {
         test_call_one_arg("test(1)"): call!(test(int!(1)));
         test_call_many_args("test(1, 2.0)"): call!(test(int!(1), float!(2.0)));
         test_parenthesis("(2 + 2) * 2"): infix!(infix!(int!(2), Plus, int!(2)), Multiply, int!(2));
+        test_simple_if("if a {}"): IfExpression::new(ident!(a), empty_body!(), None);
+        test_if_with_end_else("if a {} else {}"): IfExpression::new(ident!(a), empty_body!(), Some(Alternative::End(empty_body!())));
+        test_if_with_if_else("if a {} else if b {}"): IfExpression::new(ident!(a), empty_body!(), Some(Alternative::If(Box::new(IfExpression::new(ident!(b), empty_body!(), None)))));
+        test_while_expression("while 42 {}"): WhileExpression::new(int!(42), empty_body!())
     }
 }

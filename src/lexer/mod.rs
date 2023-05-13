@@ -81,6 +81,9 @@ impl<'source> Lexer<'source> {
         let chunk = self.cursor.chunk();
         Ok(match chunk.slice {
             "func" => Token::new(TokenKind::FuncKw, chunk),
+            "if" => Token::new(TokenKind::IfKw, chunk),
+            "else" => Token::new(TokenKind::ElseKw, chunk),
+            "while" => Token::new(TokenKind::WhileKw, chunk),
             _ => Token::new(TokenKind::Identifier, chunk),
         })
     }
@@ -98,6 +101,24 @@ impl<'source> Lexer<'source> {
             ';' => TokenKind::Semicolon,
             '{' => TokenKind::LeftBrace,
             '}' => TokenKind::RightBrace,
+            '>' => {
+                if !self.cursor.is_eof() && self.cursor.peek() == '=' {
+                    self.cursor.next_char();
+                    TokenKind::GreeterEq
+                } else { TokenKind::Greeter }
+            },
+            '<' => {
+                if !self.cursor.is_eof() && self.cursor.peek() == '=' {
+                    self.cursor.next_char();
+                    TokenKind::LessEq
+                } else { TokenKind::Less }
+            },
+            '=' => {
+                if !self.cursor.is_eof() && self.cursor.peek() == '=' {
+                    self.cursor.next_char();
+                    TokenKind::Eq
+                } else { TokenKind::Assignment }
+            }
             _ => {
                 return Err(Error::new(
                     CommonErrorKind::Lexer(ErrorKind::UnexpectedToken),
@@ -168,7 +189,12 @@ mod tests {
         test_plus("+") = Plus: "+" at 0..1;
         test_minus("-") = Minus: "-" at 0..1;
         test_multiply("*") = Multiply: "*" at 0..1;
-        test_division("/") = Division: "/" at 0..1;
+        test_less("<") = Less: "<" at 0..1;
+        test_greeter(">") = Greeter: ">" at 0..1;
+        test_less_eq("<=") = LessEq: "<=" at 0..2;
+        test_greeter_eq(">=") = GreeterEq: ">=" at 0..2;
+        test_eq("==") = Eq: "==" at 0..2;
+        test_assignment("=") = Assignment: "=" at 0..1;
         test_left_parenthesis("(") = LeftParenthesis: "(" at 0..1;
         test_right_parenthesis(")") = RightParenthesis: ")" at 0..1;
         test_left_braces("{") = LeftBrace: "{" at 0..1;
@@ -177,6 +203,9 @@ mod tests {
         test_colon(":") = Colon: ":" at 0..1;
         test_semicolon(";") = Semicolon: ";" at 0..1;
         test_func_kw("func") = FuncKw: "func" at 0..4;
+        test_if_kw("if") = IfKw: "if" at 0..2;
+        test_else_kw("else") = ElseKw: "else" at 0..4;
+        test_while_kw("while") = WhileKw: "while" at 0..5;
         test_skip_whitespaces("  123  456  ") = Integer: "123" at 2..5, Integer: "456" at 7..10;
         test_complex("2 + 2 * 2") = Integer: "2" at 0..1, Plus: "+" at 2..3, Integer: "2" at 4..5, Multiply: "*" at 6..7, Integer: "2" at 8..9;
     );

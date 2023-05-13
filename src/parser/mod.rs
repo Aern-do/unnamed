@@ -2,15 +2,24 @@ use std::ops::Index;
 
 use crate::{common::error::Result, lexer::token::Token};
 
-use self::cursor::Cursor;
+use self::{
+    cursor::Cursor,
+    delimited::Braced,
+    expressions::Expression,
+    primitive::{RightBrace, Semicolon},
+    punctuated::Punctuated,
+};
 
 pub mod cursor;
 pub mod delimited;
 pub mod error;
-pub mod expression;
+pub mod expressions;
 pub mod function;
 pub mod primitive;
 pub mod punctuated;
+
+pub type Block<'source> =
+    Braced<'source, Punctuated<'source, Expression<'source>, Semicolon, RightBrace>>;
 
 pub trait SyntaxKind<'source> {
     fn test<I: Index<usize, Output = Token<'source>>>(cursor: &Cursor<'source, I>) -> bool;
@@ -44,4 +53,30 @@ macro_rules! tests {
         )+
 
     };
+}
+
+#[macro_export]
+macro_rules! consume {
+    ($cursor: ident($token: ident) { $($v1: ident $(| $v2: ident)* => $body: expr),* $(,)? }) => {{
+        let $token = $cursor.consume(&[
+            $(TokenKind::$v1, $(TokenKind::$v2),*)*
+        ])?;
+        match $token.kind {
+            $(TokenKind::$v1 $(| TokenKind::$v2)* => $body),*,
+            _ => unreachable!()
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! check {
+    ($cursor: ident($token: ident) { $($v1: ident $(| $v2: ident)* => $body: expr),* $(,)? }) => {{
+        let $token = $cursor.check(&[
+            $(TokenKind::$v1, $(TokenKind::$v2,)*)*
+        ])?;
+        match $token.kind {
+            $(TokenKind::$v1 $(| TokenKind::$v2)* => $body),*,
+            _ => unreachable!()
+        }
+    }};
 }

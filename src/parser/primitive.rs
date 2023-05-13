@@ -10,7 +10,7 @@ use super::{cursor::Cursor, Parse, SyntaxKind};
 macro_rules! implement_primitive {
     ($($kind: ident),*) => {
         $(
-            #[derive(Debug, Clone, PartialEq, Eq)]
+            #[derive(Debug, Default, Clone, PartialEq, Eq)]
             pub struct $kind;
             impl<'source> Parse<'source> for $kind {
                 fn parse<I: Index<usize, Output = Token<'source>>>(
@@ -78,6 +78,14 @@ impl<'source, T: Parse<'source> + SyntaxKind<'source>> Parse<'source> for Option
     }
 }
 
+impl<'source, T: Parse<'source>> Parse<'source> for Box<T> {
+    fn parse<I: Index<usize, Output = Token<'source>>>(
+        cursor: &mut Cursor<'source, I>,
+    ) -> Result<'source, Self> {
+        Ok(Box::new(cursor.parse()?))
+    }
+}
+
 implement_primitive!(
     Plus,
     Minus,
@@ -90,7 +98,10 @@ implement_primitive!(
     Comma,
     Colon,
     Semicolon,
-    FuncKw
+    FuncKw,
+    IfKw,
+    ElseKw,
+    WhileKw
 );
 implement_primitive_inner!(Integer<'source>, Float<'source>, Identifier<'source>);
 

@@ -3,16 +3,14 @@ use std::{path::Path, result};
 use lexer::Lexer;
 use rustyline::{error::ReadlineError, DefaultEditor, Result};
 
-use crate::parser::function::Function;
+use crate::parser::expressions::Expression;
 
 pub mod common;
-pub mod interpreter;
 pub mod lexer;
 pub mod parser;
 
 fn main() -> Result<()> {
     let mut rl = DefaultEditor::new()?;
-
     loop {
         let readline = rl.readline("> ");
 
@@ -30,7 +28,7 @@ fn main() -> Result<()> {
                 };
 
                 let mut cursor = parser::cursor::Cursor::new(tokens.len(), tokens);
-                let expression = match cursor.parse::<Function>() {
+                let expression = match cursor.parse::<Expression>() {
                     Ok(expression) => expression,
                     Err(err) => {
                         eprintln!("{err}");

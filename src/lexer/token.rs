@@ -80,6 +80,13 @@ pub enum TokenKind {
     Minus,
     Multiply,
     Division,
+    Less,
+    Greeter,
+    LessEq,
+    GreeterEq,
+    Eq,
+    Assignment,
+    
 
     Comma,
     LeftParenthesis,
@@ -90,6 +97,9 @@ pub enum TokenKind {
     Semicolon,
 
     FuncKw,
+    IfKw,
+    ElseKw,
+    WhileKw,
 }
 
 impl Display for TokenKind {
@@ -110,6 +120,15 @@ impl Display for TokenKind {
             TokenKind::FuncKw => write!(f, "func"),
             TokenKind::LeftBrace => write!(f, "left brace"),
             TokenKind::RightBrace => write!(f, "right brace"),
+            TokenKind::IfKw => write!(f, "if"),
+            TokenKind::ElseKw => write!(f, "else"),
+            TokenKind::WhileKw => write!(f, "while"),
+            TokenKind::Less => write!(f, "less"),
+            TokenKind::Greeter => write!(f, "greeter"),
+            TokenKind::LessEq => write!(f, "less or equal"),
+            TokenKind::GreeterEq => write!(f, "greeter or eq"),
+            TokenKind::Eq => write!(f, "eq"),
+            TokenKind::Assignment => write!(f, "assignment"),
         }
     }
 }

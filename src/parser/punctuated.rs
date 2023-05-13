@@ -63,7 +63,7 @@ impl<
 mod tests {
 
     use crate::{
-        lexer::token::{Token},
+        lexer::token::Token,
         parser::{
             cursor::Cursor,
             primitive::{Comma, Integer, RightParenthesis},
