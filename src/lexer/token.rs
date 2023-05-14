@@ -102,6 +102,8 @@ pub enum TokenKind {
     LetKw,
     MutKw,
     ReturnKw,
+    TrueKw,
+    FalseKw
 }
 
 impl Display for TokenKind {
@@ -134,6 +136,8 @@ impl Display for TokenKind {
             TokenKind::LetKw => write!(f, "'let'"),
             TokenKind::MutKw => write!(f, "'mut'"),
             TokenKind::ReturnKw => write!(f, "'return'"),
+            TokenKind::TrueKw => write!(f, "'true'"),
+            TokenKind::FalseKw => write!(f, "'false'"),
         }
     }
 }

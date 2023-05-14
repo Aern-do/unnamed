@@ -87,6 +87,8 @@ impl<'source> Lexer<'source> {
             "return" => Token::new(TokenKind::ReturnKw, chunk),
             "let" => Token::new(TokenKind::LetKw, chunk),
             "mut" => Token::new(TokenKind::MutKw, chunk),
+            "true" => Token::new(TokenKind::TrueKw, chunk),
+            "false" => Token::new(TokenKind::FalseKw, chunk),
             _ => Token::new(TokenKind::Identifier, chunk),
         })
     }
@@ -218,7 +220,8 @@ mod tests {
         test_return_kw("return") = ReturnKw: "return" at 0..6;
         test_let_kw("let") = LetKw: "let" at 0..3;
         test_mut_kw("mut") = MutKw: "mut" at 0..3;
-
+        test_true_kw("true") = TrueKw: "true" at 0..4;
+        test_false_kw("false") = FalseKw: "false" at 0..5;
         test_skip_whitespaces("  123  456  ") = Integer: "123" at 2..5, Integer: "456" at 7..10;
         test_complex("2 + 2 * 2") = Integer: "2" at 0..1, Plus: "+" at 2..3, Integer: "2" at 4..5, Multiply: "*" at 6..7, Integer: "2" at 8..9;
     );
