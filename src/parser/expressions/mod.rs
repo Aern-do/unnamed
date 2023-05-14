@@ -14,7 +14,7 @@ use self::{if_expr::IfExpression, while_expr::WhileExpression};
 
 use super::{
     cursor::Cursor,
-    primitive::{Comma, Float, Identifier, Integer, RightParenthesis},
+    primitive::{Comma, Float, Identifier, Integer, RightParenthesis, TrueKw, FalseKw},
     punctuated::Punctuated,
     Parse,
 };
@@ -69,6 +69,8 @@ pub enum Literal<'source> {
     Integer(Integer<'source>),
     Float(Float<'source>),
     Identifier(Identifier<'source>),
+    True,
+    False,
 }
 
 impl<'source> Parse<'source> for Literal<'source> {
@@ -78,7 +80,15 @@ impl<'source> Parse<'source> for Literal<'source> {
         Ok(check!(cursor(_token) {
             Integer => Literal::Integer(cursor.parse()?),
             Float => Literal::Float(cursor.parse()?),
-            Identifier => Literal::Identifier(cursor.parse()?)
+            Identifier => Literal::Identifier(cursor.parse()?),
+            TrueKw => {
+                cursor.parse::<TrueKw>()?;
+                Literal::True
+            },
+            FalseKw => {
+                cursor.parse::<FalseKw>()?;
+                Literal::False
+            }
         }))
     }
 }
@@ -130,7 +140,7 @@ impl<'source> Expression<'source> {
             },
             IfKw => Expression::If(cursor.parse()?),
             WhileKw => Expression::While(cursor.parse()?),
-            Float | Integer => Expression::Literal(cursor.parse()?),
+            Float | Integer | TrueKw | FalseKw => Expression::Literal(cursor.parse()?),
             LeftParenthesis => {
                 cursor.next_token()?;
                 let expression = cursor.parse::<Expression>()?;
@@ -243,6 +253,8 @@ mod tests {
         test_integer("10"): int!(10);
         test_float("1.0"): float!(1.0);
         test_identifier("pi"): ident!(pi);
+        test_true("true"): Expression::Literal(Literal::True);
+        test_false("false"): Expression::Literal(Literal::False);
         test_infix("2 + pi"): infix!(int!(2), Plus, ident!(pi));
         test_call_no_args("test()"): call!(test());
         test_call_one_arg("test(1)"): call!(test(int!(1)));

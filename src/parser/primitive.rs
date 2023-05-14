@@ -110,6 +110,8 @@ implement_primitive!(
     WhileKw,
     ReturnKw,
     LetKw,
-    MutKw
+    MutKw,
+    TrueKw,
+    FalseKw
 );
 implement_primitive_inner!(Integer<'source>, Float<'source>, Identifier<'source>);
