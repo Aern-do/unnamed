@@ -7,8 +7,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  LLVM_SYS_160_PREFIX: ${{env.LLVM_PATH}}
-
+  LLVM_SYS_160_PREFIX: /home/runner/work/unnamed/unnamed/llvm
 jobs:
   check:
     runs-on: ubuntu-latest
