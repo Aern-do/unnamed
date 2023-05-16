@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install LLVM
-      run: "deb http://apt.llvm.org/lunar/ llvm-toolchain-lunar-16 main"
+      run: "deb-src http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main"
     - name: Check
       run: cargo check --verbose
     - name: Clippy
