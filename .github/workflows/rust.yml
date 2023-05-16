@@ -7,7 +7,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  LLVM_SYS_160_PREFIX: /home/runner/work/unnamed/unnamed/llvm
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -15,7 +15,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install LLVM
-      run: "deb-src http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main"
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        sudo apt-add-repository "deb-src http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main
+        sudo apt-get update
+        apt-get install libllvm-16-ocaml-dev libllvm16 llvm-16 llvm-16-dev llvm-16-doc llvm-16-examples llvm-16-runtime
+
     - name: Check
       run: cargo check --verbose
     - name: Clippy
