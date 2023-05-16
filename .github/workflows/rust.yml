@@ -7,6 +7,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  LLVM_SYS_160_PREFIX: ${{env.LLVM_PATH}}
 
 jobs:
   check:
@@ -18,8 +19,6 @@ jobs:
       uses: KyleMayes/install-llvm-action@v1.8.0
       with:
         version: "16.0"
-    - name: "Set LLVM_SYS_160_PREFIX"
-      run: echo "LLVM_SYS_160_PREFIX=$LLVM_PATH" >> $GITHUB_ENV
     - name: Check
       run: cargo check --verbose
     - name: Clippy
