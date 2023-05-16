@@ -14,7 +14,7 @@ use self::{if_expr::IfExpression, while_expr::WhileExpression};
 
 use super::{
     cursor::Cursor,
-    primitive::{Comma, Float, Identifier, Integer, RightParenthesis, TrueKw, FalseKw},
+    primitive::{Comma, FalseKw, Float, Identifier, Integer, RightParenthesis, TrueKw},
     punctuated::Punctuated,
     Parse,
 };

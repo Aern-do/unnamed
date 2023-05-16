@@ -103,7 +103,7 @@ pub enum TokenKind {
     MutKw,
     ReturnKw,
     TrueKw,
-    FalseKw
+    FalseKw,
 }
 
 impl Display for TokenKind {
