@@ -1,4 +1,5 @@
 pub mod function;
+pub mod basic_block;
 
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -35,13 +36,17 @@ pub trait AsValueRef<'ctx> {
 
 #[derive(Debug, Clone)]
 pub(crate) struct BaseValue<'ctx> {
-    _context: &'ctx Context,
+    context: &'ctx Context,
     inner: LLVMValueRef,
 }
 
 impl<'ctx> BaseValue<'ctx> {
-    pub fn new(_context: &'ctx Context, inner: LLVMValueRef) -> Self {
-        Self { _context, inner }
+    pub(crate) fn new(context: &'ctx Context, inner: LLVMValueRef) -> Self {
+        Self { context, inner }
+    }
+
+    pub(crate) fn get_context(&self) -> &'ctx Context {
+        self.context
     }
 }
 

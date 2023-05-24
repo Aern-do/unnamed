@@ -12,7 +12,7 @@ fn main() {
 
     let no_return = context.attribute(AttributeKind::NoReturn);
     let cold = context.attribute(AttributeKind::Cold);
-    func.add_attributes(&[no_return, cold]);
+    func.add_argument_attributes(1, &[no_return, cold]);
 
     println!("{}", module.print_to_string().to_string_lossy());
 }
