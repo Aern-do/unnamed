@@ -1,0 +1,12 @@
+[package]
+name = "llvm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+llvm-sys = "160"
+paste = "1.0.12"
+
+[build-dependencies]
+anyhow = "1.0.71"
+cc = "1.0.79"

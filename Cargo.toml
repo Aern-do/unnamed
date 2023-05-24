@@ -1,12 +1,2 @@
-[package]
-name = "unnamed"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-unicode-ident = "1.0.5"
-paste = "1.0.11"
-owo-colors = { version = "3.5.0", features = ["supports-colors"]}
-rustyline = "11.0.0"
-derive_macro = { path = "./derive_macro", version = "*" }
-llvm = { path = "./llvm" }
+[workspace]
+members = ["libs/unnamed-compiler", "libs/unnamed-llvm", "libs/unnamed-derive"]
