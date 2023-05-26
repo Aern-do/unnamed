@@ -2,6 +2,13 @@
 
 WIP
 
+## To Do
+
+- [x] Lexer
+- [x] Parser
+- [ ] Safe wrapper over LLVM
+- [ ] Compiler 
+
 ## Function declaration
 ```ts
 func add(a: int, b: int) : int {
@@ -15,7 +22,21 @@ func foo() {
 }
 ```
 
-## If expressions
+## Variable declaration
+```ts
+let foo
+```
+```ts
+let bar = 10
+```
+```ts
+let mut foo
+```
+```ts
+let mut bar = 10
+```
+
+## If expression
 ```ts
 if foo > bar {} else if foo < bar {} else {}
 ```
@@ -24,4 +45,12 @@ if foo > bar {} else if foo < bar {} else {}
 print(if foo == bar { 42 } else { 0 })
 ```
 
-## While 
+## While expression
+
+```ts
+while i < 10 {}
+```
+
+```ts
+print(while i < 10 { 0 })
+```
