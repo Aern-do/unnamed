@@ -10,3 +10,4 @@ paste = "1.0.12"
 [build-dependencies]
 anyhow = "1.0.71"
 cc = "1.0.79"
+typed-builder = "0.14.0"

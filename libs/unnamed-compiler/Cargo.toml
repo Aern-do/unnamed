@@ -10,3 +10,4 @@ owo-colors = { version = "3.5.0", features = ["supports-colors"]}
 rustyline = "11.0.0"
 derive_macro = { path = "../unnamed-derive", version = "*" }
 llvm = { path = "../unnamed-llvm" }
+llvm-sys = "160"
